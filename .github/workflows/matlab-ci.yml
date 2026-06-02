@@ -1,0 +1,29 @@
+name: MATLAB CI
+
+on:                             # Trigger workflow bei push und pull request -> für "main" und "master" branch   
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:            # workflow run: einer oder mehrere Jobs, einzeln oder parallel laufend 
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repository auschecken             # Repository prüfen
+        uses: actions/checkout@v4
+
+      - name: MATLAB einrichten                 # Matlab einrichten/starten
+        uses: matlab-actions/setup-matlab@v2
+
+      - name: MATLAB-/Simulink-Tests ausführen  # Simulink testen
+        run: matlab -batch "addpath(genpath(pwd)); run_all_tests"
+
+      - name: Testergebnisse hochladen          # Testergebnisse sichern
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: matlab-test-results
+          path: test-results/
