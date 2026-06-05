@@ -44,13 +44,15 @@ classdef test_StrategySelection < matlab.unittest.TestCase
         end
     end
 
-    methods (TestMethodTeardown)
-        function closeModel(tc)
+ methods (TestMethodTeardown)
+    function closeModel(tc)
+        if exist('bdIsLoaded', 'file') == 2
             if bdIsLoaded(tc.MODEL)
                 close_system(tc.MODEL, 0);
             end
         end
     end
+end
 
     methods (Test)
         function test_MTPC_reference_point(tc)
