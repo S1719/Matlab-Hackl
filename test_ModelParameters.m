@@ -17,11 +17,11 @@ classdef test_ModelParameters < matlab.unittest.TestCase
         function test_required_parameters_exist(tc)
             for k = 1:numel(tc.REQUIRED_PARAMS)
                 parName = tc.REQUIRED_PARAMS{k};
-                tc.verifyTrue(evalin('base', sprintf('exist(''%s'',''var'')', parName)) == 1, ...
-                    'Parameter %s ist nicht vorgegeben.', parName);
+                tc.verifyTrue( ...
+                    evalin('base', sprintf('exist(''%s'',''var'')', parName)) == 1, ...
+                    sprintf('Parameter %s ist nicht vorgegeben.', parName));
             end
 
-            % U_max ist optional, aber wenn vorhanden, wird er zusätzlich geprüft.
             hasUmax = evalin('base', 'exist(''U_max'',''var'')');
             tc.verifyTrue(hasUmax == 1 || evalin('base', 'exist(''U_dc'',''var'')') == 1, ...
                 'Es muss mindestens U_dc oder U_max vorgegeben sein.');
@@ -42,7 +42,6 @@ classdef test_ModelParameters < matlab.unittest.TestCase
 
             tc.verifyGreaterThan(p, 0, 'p muss > 0 sein.');
             tc.verifyEqual(p, round(p), 'p muss ganzzahlig sein.');
-
             tc.verifyGreaterThanOrEqual(Rs, 0, 'Rs muss >= 0 sein.');
             tc.verifyGreaterThan(I_max, 0, 'I_max muss > 0 sein.');
             tc.verifyGreaterThan(U_dc, 0, 'U_dc muss > 0 sein.');
@@ -58,8 +57,7 @@ classdef test_ModelParameters < matlab.unittest.TestCase
                 tc.verifyTrue(isnumeric(U_max) && isscalar(U_max) && isfinite(U_max) && isreal(U_max), ...
                     'U_max ist ungültig.');
                 tc.verifyGreaterThan(U_max, 0, 'U_max muss > 0 sein.');
-                tc.verifyLessThanOrEqual(U_max, U_dc, ...
-                    'U_max sollte nicht größer als U_dc sein.');
+                tc.verifyLessThanOrEqual(U_max, U_dc, 'U_max sollte nicht größer als U_dc sein.');
             end
         end
 
@@ -71,8 +69,7 @@ classdef test_ModelParameters < matlab.unittest.TestCase
 
                 tc.verifyTrue(isnumeric(n_mech) && isscalar(n_mech) && isfinite(n_mech) && isreal(n_mech), ...
                     'n_mech ist ungültig.');
-                tc.verifyLessThanOrEqual(n_mech, n_max, ...
-                    'Vorgabe n_mech ist größer als n_max.');
+                tc.verifyLessThanOrEqual(n_mech, n_max, 'Vorgabe n_mech ist größer als n_max.');
             end
         end
     end
