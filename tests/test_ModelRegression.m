@@ -42,91 +42,95 @@ classdef test_ModelRegression < matlab.unittest.TestCase
         TIME_TOL = 1e-12
     end
 
-    methods (Test)
-        function test_regression_against_baseline(tc)
-            repoRoot = localGetRepoRoot();
-            baselineDir = fullfile(repoRoot, 'baseline');
-            baselineFile = fullfile(baselineDir, [tc.MODEL '_baseline.mat']);
+   methods (Test)
+    function test_regression_against_baseline(tc)
+        repoRoot = localGetRepoRoot();
+        baselineDir = fullfile(repoRoot, 'baseline');
+        baselineFile = fullfile(baselineDir, [tc.MODEL '_baseline.mat']);
 
-            tc.assumeTrue(exist([tc.INIT_SCRIPT '.m'], 'file') == 2, ...
-                'Initialisierungsskript %s.m wurde nicht gefunden.', tc.INIT_SCRIPT);
+        tc.assumeTrue(exist([tc.INIT_SCRIPT '.m'], 'file') == 2, ...
+            sprintf('Initialisierungsskript %s.m wurde nicht gefunden.', tc.INIT_SCRIPT));
 
-            tc.assumeTrue(exist([tc.MODEL '.slx'], 'file') == 2 || exist([tc.MODEL '.mdl'], 'file') == 2, ...
-                'Modell %s wurde nicht gefunden.', tc.MODEL);
+        tc.assumeNotEmpty(which('load_system'), ...
+            'Simulink ist in der CI-Umgebung nicht verfügbar.');
+        tc.assumeTrue(license('test','Simulink'), ...
+            'Keine Simulink-Lizenz in der CI-Umgebung verfügbar.');
 
-            current = localRunAllCases(tc);
+        tc.assumeTrue(exist([tc.MODEL '.slx'], 'file') == 2 || exist([tc.MODEL '.mdl'], 'file') == 2, ...
+            sprintf('Modell %s wurde nicht gefunden.', tc.MODEL));
 
-            createBaseline = strcmpi(getenv('CREATE_BASELINE'), '1');
-            updateBaseline = strcmpi(getenv('UPDATE_BASELINE'), '1');
+        current = localRunAllCases(tc);
 
-            if createBaseline || updateBaseline
-                if ~exist(baselineDir, 'dir')
-                    mkdir(baselineDir);
-                end
-                baseline = current; %#ok<NASGU>
-                save(baselineFile, 'baseline');
-                tc.assertTrue(exist(baselineFile, 'file') == 2, ...
-                    'Baseline-Datei konnte nicht geschrieben werden: %s', baselineFile);
-                return;
+        createBaseline = strcmpi(getenv('CREATE_BASELINE'), '1');
+        updateBaseline = strcmpi(getenv('UPDATE_BASELINE'), '1');
+
+        if createBaseline || updateBaseline
+            if ~exist(baselineDir, 'dir')
+                mkdir(baselineDir);
             end
-
+            baseline = current; %#ok<NASGU>
+            save(baselineFile, 'baseline');
             tc.assertTrue(exist(baselineFile, 'file') == 2, ...
-                ['Baseline-Datei fehlt: ' baselineFile newline ...
-                 'Erzeuge sie einmal lokal mit CREATE_BASELINE=1.']);
+                sprintf('Baseline-Datei konnte nicht geschrieben werden: %s', baselineFile));
+            return;
+        end
 
-            S = load(baselineFile, 'baseline');
-            tc.assertTrue(isfield(S, 'baseline'), ...
-                'Baseline-Datei enthält keine Variable "baseline".');
+        tc.assertTrue(exist(baselineFile, 'file') == 2, ...
+            ['Baseline-Datei fehlt: ' baselineFile newline ...
+             'Erzeuge sie einmal lokal mit CREATE_BASELINE=1.']);
 
-            baseline = S.baseline;
+        S = load(baselineFile, 'baseline');
+        tc.assertTrue(isfield(S, 'baseline'), ...
+            'Baseline-Datei enthält keine Variable "baseline".');
 
-            tc.verifyEqual(current.model, baseline.model, ...
-                'Baseline passt nicht zum aktuell getesteten Modell.');
+        baseline = S.baseline;
 
-            tc.verifyEqual(numel(current.cases), numel(baseline.cases), ...
-                'Anzahl der Testfälle stimmt nicht mit der Baseline überein.');
+        tc.verifyEqual(current.model, baseline.model, ...
+            'Baseline passt nicht zum aktuell getesteten Modell.');
 
-            for i = 1:numel(current.cases)
-                curCase = current.cases(i);
-                refCase = baseline.cases(i);
+        tc.verifyEqual(numel(current.cases), numel(baseline.cases), ...
+            'Anzahl der Testfälle stimmt nicht mit der Baseline überein.');
 
-                tc.verifyEqual(curCase.n_mech, refCase.n_mech, ...
-                    'n_mech des Testfalls stimmt nicht mit der Baseline überein.');
-                tc.verifyEqual(curCase.T_soll, refCase.T_soll, ...
-                    'T_soll des Testfalls stimmt nicht mit der Baseline überein.');
+        for i = 1:numel(current.cases)
+            curCase = current.cases(i);
+            refCase = baseline.cases(i);
 
-                for k = 1:numel(tc.SIGNALS)
-                    sigName = tc.SIGNALS{k};
+            tc.verifyEqual(curCase.n_mech, refCase.n_mech, ...
+                'n_mech des Testfalls stimmt nicht mit der Baseline überein.');
+            tc.verifyEqual(curCase.T_soll, refCase.T_soll, ...
+                'T_soll des Testfalls stimmt nicht mit der Baseline überein.');
 
-                    tc.verifyTrue(isfield(refCase.signals, sigName), ...
-                        'Signal %s fehlt in der Baseline.', sigName);
+            for k = 1:numel(tc.SIGNALS)
+                sigName = tc.SIGNALS{k};
 
-                    tCur = curCase.signals.(sigName).time(:);
-                    yCur = curCase.signals.(sigName).data;
-                    tRef = refCase.signals.(sigName).time(:);
-                    yRef = refCase.signals.(sigName).data;
+                tc.verifyTrue(isfield(refCase.signals, sigName), ...
+                    sprintf('Signal %s fehlt in der Baseline.', sigName));
 
-                    tc.verifyEqual(size(tCur), size(tRef), ...
-                        'Zeitvektor von %s hat eine andere Größe als in der Baseline.', sigName);
+                tCur = curCase.signals.(sigName).time(:);
+                yCur = curCase.signals.(sigName).data;
+                tRef = refCase.signals.(sigName).time(:);
+                yRef = refCase.signals.(sigName).data;
 
-                    tc.verifyLessThanOrEqual(max(abs(tCur - tRef)), tc.TIME_TOL, ...
-                        sprintf('Zeitvektor von %s unterscheidet sich von der Baseline.', sigName));
+                tc.verifyEqual(size(tCur), size(tRef), ...
+                    sprintf('Zeitvektor von %s hat eine andere Größe als in der Baseline.', sigName));
 
-                    tc.verifyEqual(size(yCur), size(yRef), ...
-                        'Signal %s hat eine andere Größe als in der Baseline.', sigName);
+                tc.verifyLessThanOrEqual(max(abs(tCur - tRef)), tc.TIME_TOL, ...
+                    sprintf('Zeitvektor von %s unterscheidet sich von der Baseline.', sigName));
 
-                    if strcmp(sigName, 'strategie')
-                        tc.verifyEqual(yCur, yRef, ...
-                            'AbsTol', tc.ABS_TOL_STRAT, ...
-                            sprintf('Strategie-Signal %s stimmt nicht mit der Baseline überein.', sigName));
-                    else
-                        refScale = max(1, max(abs(yRef(:))));
-                        absTol = tc.ABS_TOL_IDIQ + tc.REL_TOL_IDIQ * refScale;
-                        absErr = max(abs(yCur(:) - yRef(:)));
+                tc.verifyEqual(size(yCur), size(yRef), ...
+                    sprintf('Signal %s hat eine andere Größe als in der Baseline.', sigName));
 
-                        tc.verifyLessThanOrEqual(absErr, absTol, ...
-                            sprintf('Regressionsfehler in %s: max |Delta| = %.6g', sigName, absErr));
-                    end
+                if strcmp(sigName, 'strategie')
+                    tc.verifyEqual(yCur, yRef, ...
+                        'AbsTol', tc.ABS_TOL_STRAT, ...
+                        sprintf('Strategie-Signal %s stimmt nicht mit der Baseline überein.', sigName));
+                else
+                    refScale = max(1, max(abs(yRef(:))));
+                    absTol = tc.ABS_TOL_IDIQ + tc.REL_TOL_IDIQ * refScale;
+                    absErr = max(abs(yCur(:) - yRef(:)));
+
+                    tc.verifyLessThanOrEqual(absErr, absTol, ...
+                        sprintf('Regressionsfehler in %s: max |Delta| = %.6g', sigName, absErr));
                 end
             end
         end
