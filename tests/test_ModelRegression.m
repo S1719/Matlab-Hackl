@@ -24,7 +24,7 @@ classdef test_ModelRegression < matlab.unittest.TestCase
     % baseline.signals.strategie.data
 
     properties (Constant)
-        MODEL = 'Arbeitspunktsteuerung_Simulink_5_Runtime'
+        MODEL = 'Pilsen_Algo_V2_f'
         INIT_SCRIPT = 'Messdaten_Interpoliert'
 
         SIGNALS = {'id_ref','iq_ref','strategie'}
