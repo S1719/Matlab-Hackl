@@ -21,8 +21,7 @@ jobs:
       - name: MATLAB-/Simulink-Tests ausführen  # Simulink testen
         uses: matlab-actions/run-command@v2
         with:
-          command: "cd(getenv('MW_ORIG_WORKING_FOLDER')); disp(pwd); which run_all_tests -all; exist('tests/run_all_tests.m','file'); 
-                    addpath(genpath(pwd)); run('tests/run_all_tests.m')"
+          command: "cd(getenv('MW_ORIG_WORKING_FOLDER')); addpath(genpath(pwd)); run_all_tests"
 
       - name: Testergebnisse hochladen          # Testergebnisse sichern
         if: always()
