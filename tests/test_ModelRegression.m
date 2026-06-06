@@ -143,6 +143,7 @@ current.model = tc.MODEL;
 current.cases = struct([]);
 
 load_system(tc.MODEL);
+cleanupObj = onCleanup(@() close_system(tc.MODEL, 0));
 
 for i = 1:numel(tc.N_TEST)
     nVal = tc.N_TEST(i);
@@ -177,8 +178,6 @@ for i = 1:numel(tc.N_TEST)
 
     current.cases(i) = c; %#ok<AGROW>
 end
-
-close_system(tc.MODEL, 0);
 end
 
 function [t, y] = localExtractSignal(simOut, sigName)
