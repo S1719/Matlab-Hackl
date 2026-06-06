@@ -2,9 +2,9 @@ classdef test_ModelParameters < matlab.unittest.TestCase
     % Prüft, ob die notwendigen Maschinenparameter existieren und gültig sind.
 
     properties (Constant)
-        MODEL = 'Arbeitspunktsteuerung_Simulink_5_Runtime'
+        MODEL = 'Pilsen_Algo_V2_f'                             % Name des Simulink-Modells
 
-        BLK_Rs    = 'Pilsen_Algo_V2_f/Maschinendaten/Rs'
+        BLK_Rs    = 'Pilsen_Algo_V2_f/Maschinendaten/Rs'       % Name der notwendigen Maschinendaten im Simulinkmodell unter diesem Pfad
         BLK_Imax  = 'Pilsen_Algo_V2_f/Maschinendaten/I_max'
         BLK_p     = 'Pilsen_Algo_V2_f/Maschinendaten/p'
         BLK_Udc   = 'Pilsen_Algo_V2_f/Maschinendaten/U_dc'
@@ -35,12 +35,12 @@ classdef test_ModelParameters < matlab.unittest.TestCase
     end
 
     methods (Test)
-        function test_required_parameters_exist(tc)
-            tc.verifyTrue(ischar(get_param(tc.BLK_Rs,   'Value')) || isstring(get_param(tc.BLK_Rs,   'Value')));
-            tc.verifyTrue(ischar(get_param(tc.BLK_Imax, 'Value')) || isstring(get_param(tc.BLK_Imax, 'Value')));
-            tc.verifyTrue(ischar(get_param(tc.BLK_p,    'Value')) || isstring(get_param(tc.BLK_p,    'Value')));
-            tc.verifyTrue(ischar(get_param(tc.BLK_Udc,  'Value')) || isstring(get_param(tc.BLK_Udc,  'Value')));
-            tc.verifyTrue(ischar(get_param(tc.BLK_nmax, 'Value')) || isstring(get_param(tc.BLK_nmax, 'Value')));
+       function test_required_parameters_exist(tc)
+            tc.verifyTrue(ischar(get_param(tc.BLK_Rs,   'Value')) || isstring(get_param(tc.BLK_Rs,   'Value')), 'Rs-Blockwert konnte nicht gelesen werden.');
+            tc.verifyTrue(ischar(get_param(tc.BLK_Imax, 'Value')) || isstring(get_param(tc.BLK_Imax, 'Value')), 'I_max-Blockwert konnte nicht gelesen werden.');
+            tc.verifyTrue(ischar(get_param(tc.BLK_p,    'Value')) || isstring(get_param(tc.BLK_p,    'Value')), 'p-Blockwert konnte nicht gelesen werden.');
+            tc.verifyTrue(ischar(get_param(tc.BLK_Udc,  'Value')) || isstring(get_param(tc.BLK_Udc,  'Value')), 'U_dc-Blockwert konnte nicht gelesen werden.');
+            tc.verifyTrue(ischar(get_param(tc.BLK_nmax, 'Value')) || isstring(get_param(tc.BLK_nmax, 'Value')), 'n_max-Blockwert konnte nicht gelesen werden.');
         end
 
         function test_parameter_values_are_valid(tc)
