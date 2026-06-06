@@ -1,16 +1,16 @@
 function run_all_tests
 % Zentrales Skript für lokale Testläufe und GitHub Actions.
 
+repoRoot = fileparts(mfilename('fullpath'));
+testsDir = fullfile(repoRoot, 'tests');
+
+addpath(testsDir);
+
 % Überprüfung, welche Dateien durchlaufen werden
 disp('--- DEBUG ---');
 which run_all_tests -all
 which test_ModelParameters -all
 which test_StrategySelection -all
-
-repoRoot = fileparts(mfilename('fullpath'));
-testsDir = fullfile(repoRoot, 'tests');
-
-addpath(genpath(repoRoot));
 
 disp('--- DEBUG: resolved test files ---');
 which test_LUT_Consistency -all
