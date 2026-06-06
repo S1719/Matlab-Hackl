@@ -3,8 +3,8 @@ classdef test_StrategySelection < matlab.unittest.TestCase
     % Referenzpunkten.
   
     properties (Constant)
-        MODEL = 'Arbeitspunktsteuerung_Simulink_5_Runtime'
-        INIT_SCRIPT = 'Messdaten_Interpoliert'
+        MODEL = 'Pilsen_Algo_V2_f'                    % Name des Simulink-Modells
+        INIT_SCRIPT = 'Messdaten_Interpoliert'        % Name des Initialisierungsskriptes
 
         INPUT_SPEED_VAR  = 'n_mech'
         INPUT_TORQUE_VAR = 'T_soll'
@@ -13,14 +13,15 @@ classdef test_StrategySelection < matlab.unittest.TestCase
         SIGNAL_IQ_REF = 'iq_ref'
         SIGNAL_STRAT  = 'strategie'
 
-        % Strategiekodierung nach bisherigem Projektstand:
-        STRAT_NONE         = 0
-        STRAT_MTPC         = 1
-        STRAT_T_U_MAX      = 2
-        STRAT_MTPV         = 3
-        STRAT_MTPF         = 4
+        BLK_Imax = 'Pilsen_Algo_V2_f/Maschinendaten/I_max'
+        BLK_nmax = 'Pilsen_Algo_V2_f/Maschinendaten/n_max'
 
-        % Referenzpunkte
+        STRAT_NONE    = 0
+        STRAT_MTPC    = 1
+        STRAT_T_U_MAX = 2
+        STRAT_MTPV    = 3
+        STRAT_MTPF    = 4
+
         N_MTPC = 2000
         T_MTPC = 50
 
@@ -37,22 +38,31 @@ classdef test_StrategySelection < matlab.unittest.TestCase
         function prepareModel(tc)
             evalin('base', tc.INIT_SCRIPT);
 
-            tc.assumeTrue(exist([tc.MODEL '.slx'], 'file') == 2 || exist([tc.MODEL '.mdl'], 'file') == 2, ...
-                'Modell %s wurde nicht gefunden.', tc.MODEL);
+            tc.assumeTrue( ...
+                exist([tc.MODEL '.slx'], 'file') == 2 || exist([tc.MODEL '.mdl'], 'file') == 2, ...
+                sprintf('Modell %s wurde nicht gefunden.', tc.MODEL));
 
             load_system(tc.MODEL);
         end
     end
 
- methods (TestMethodTeardown)
-    function closeModel(tc)
-        if exist('bdIsLoaded', 'file') == 2
-            if bdIsLoaded(tc.MODEL)
-                close_system(tc.MODEL, 0);
+    methods (TestMethodTeardown)
+        function closeModel(tc)
+            if exist('bdclose','file') == 2
+                try
+                    bdclose(tc.MODEL);
+                catch
+                end
             end
         end
     end
-end
+
+    methods (Static)
+        function val = readConstant(blockPath)
+            raw = get_param(blockPath, 'Value');
+            val = str2double(raw);
+        end
+    end
 
     methods (Test)
         function test_MTPC_reference_point(tc)
@@ -95,8 +105,9 @@ end
         end
 
         function test_speed_reference_below_n_max_for_reference_points(tc)
-            n_max = evalin('base', 'n_max');
+            n_max = tc.readConstant(tc.BLK_nmax);
 
+            tc.verifyTrue(isfinite(n_max), 'n_max konnte nicht numerisch gelesen werden.');
             tc.verifyLessThanOrEqual(tc.N_MTPC, n_max, 'MTPC-Referenzpunkt verletzt n_max.');
             tc.verifyLessThanOrEqual(tc.N_MTPF, n_max, 'MTPF-Referenzpunkt verletzt n_max.');
             tc.verifyLessThanOrEqual(tc.N_MTPV, n_max, 'MTPV-Referenzpunkt verletzt n_max.');
@@ -112,10 +123,9 @@ end
 end
 
 function out = localRunCase(tc, n_mech_value, T_soll_value)
-    % Workspace vorbereiten
     evalin('base', tc.INIT_SCRIPT);
 
-    I_max = evalin('base', 'I_max');
+    I_max = tc.readConstant(tc.BLK_Imax);
 
     in = Simulink.SimulationInput(tc.MODEL);
     in = in.setVariable(tc.INPUT_SPEED_VAR, n_mech_value);
@@ -133,35 +143,30 @@ function value = localExtractLastValue(simOut, sigName)
     data = [];
     value = [];
 
-    % 1) logsout
     try
         logs = simOut.logsout;
         if ~isempty(logs)
             elem = logs.get(sigName);
             if ~isempty(elem)
-                vals = elem.Values;
-                data = vals.Data;
+                data = elem.Values.Data;
             end
         end
     catch
     end
 
-    % 2) yout
     if isempty(data)
         try
             yout = simOut.get('yout');
             if isa(yout, 'Simulink.SimulationData.Dataset')
                 elem = yout.getElement(sigName);
                 if ~isempty(elem)
-                    vals = elem.Values;
-                    data = vals.Data;
+                    data = elem.Values.Data;
                 end
             end
         catch
         end
     end
 
-    % 3) Direkt gespeicherte Variable
     if isempty(data)
         try
             candidate = simOut.get(sigName);
