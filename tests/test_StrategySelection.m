@@ -41,7 +41,8 @@ classdef test_StrategySelection < matlab.unittest.TestCase
             tc.assumeTrue( ...
                 exist([tc.MODEL '.slx'], 'file') == 2 || exist([tc.MODEL '.mdl'], 'file') == 2, ...
                 sprintf('Modell %s wurde nicht gefunden.', tc.MODEL));
-
+            tc.assumeNotEmpty(which('load_system'), 'Simulink ist in der CI-Umgebung nicht verfügbar.');
+            tc.assumeTrue(license('test','Simulink'), 'Keine Simulink-Lizenz in der CI-Umgebung verfügbar.');
             load_system(tc.MODEL);
         end
     end
