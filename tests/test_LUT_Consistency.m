@@ -13,8 +13,6 @@ classdef test_LUT_Consistency < matlab.unittest.TestCase
 
     methods (TestMethodSetup)
         function runInitScript(tc)
-            % Im Base Workspace ausführen, damit clear/clearvars im Skript
-            % nicht das Testobjekt löschen.
             evalin('base', 'clear ID IQ PSID PSIQ Ld Lq Lm id_fine iq_fine');
             evalin('base', tc.INIT_SCRIPT);
         end
@@ -24,18 +22,22 @@ classdef test_LUT_Consistency < matlab.unittest.TestCase
         function test_required_variables_exist(tc)
             for k = 1:numel(tc.REQUIRED_MATRICES)
                 varName = tc.REQUIRED_MATRICES{k};
-                tc.verifyTrue(evalin('base', sprintf('exist(''%s'',''var'')', varName)) == 1, ...
-                    'Variable %s existiert nicht.', varName);
-                tc.verifyNotEmpty(evalin('base', varName), ...
-                    'Variable %s ist leer.', varName);
+                tc.verifyTrue( ...
+                    evalin('base', sprintf('exist(''%s'',''var'')', varName)) == 1, ...
+                    sprintf('Variable %s existiert nicht.', varName));
+                tc.verifyNotEmpty( ...
+                    evalin('base', varName), ...
+                    sprintf('Variable %s ist leer.', varName));
             end
 
             for k = 1:numel(tc.REQUIRED_VECTORS)
                 varName = tc.REQUIRED_VECTORS{k};
-                tc.verifyTrue(evalin('base', sprintf('exist(''%s'',''var'')', varName)) == 1, ...
-                    'Variable %s existiert nicht.', varName);
-                tc.verifyNotEmpty(evalin('base', varName), ...
-                    'Variable %s ist leer.', varName);
+                tc.verifyTrue( ...
+                    evalin('base', sprintf('exist(''%s'',''var'')', varName)) == 1, ...
+                    sprintf('Variable %s existiert nicht.', varName));
+                tc.verifyNotEmpty( ...
+                    evalin('base', varName), ...
+                    sprintf('Variable %s ist leer.', varName));
             end
         end
 
@@ -91,10 +93,10 @@ classdef test_LUT_Consistency < matlab.unittest.TestCase
                 varName = allVars{k};
                 A = evalin('base', varName);
 
-                tc.verifyTrue(isnumeric(A), '%s muss numerisch sein.', varName);
-                tc.verifyTrue(isreal(A), '%s enthält komplexe Werte.', varName);
-                tc.verifyFalse(any(isnan(A(:))), '%s enthält NaN.', varName);
-                tc.verifyFalse(any(isinf(A(:))), '%s enthält Inf.', varName);
+                tc.verifyTrue(isnumeric(A), sprintf('%s muss numerisch sein.', varName));
+                tc.verifyTrue(isreal(A), sprintf('%s enthält komplexe Werte.', varName));
+                tc.verifyFalse(any(isnan(A(:))), sprintf('%s enthält NaN.', varName));
+                tc.verifyFalse(any(isinf(A(:))), sprintf('%s enthält Inf.', varName));
             end
         end
     end
