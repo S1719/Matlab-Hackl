@@ -18,6 +18,11 @@ jobs:
       - name: MATLAB einrichten                 # Matlab einrichten/starten
         uses: matlab-actions/setup-matlab@v2
 
+     - name: MATLAB/Simulink Diagnose
+       uses: matlab-actions/run-command@v2
+       with:
+           command: "ver; which load_system -all; license('test','Simulink')"
+    
       - name: MATLAB-/Simulink-Tests ausführen  # Simulink testen
         uses: matlab-actions/run-command@v2
         with:
