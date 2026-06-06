@@ -13,6 +13,8 @@ classdef test_ModelParameters < matlab.unittest.TestCase
 
     methods (TestMethodSetup)
         function prepareModel(tc)
+            tc.assumeNotEmpty(which('load_system'), 'Simulink ist in der CI-Umgebung nicht verfügbar.');
+            tc.assumeTrue(license('test','Simulink'), 'Keine Simulink-Lizenz in der CI-Umgebung verfügbar.');
             load_system(tc.MODEL);
         end
     end
