@@ -80,8 +80,7 @@ Lq = Lqq_fine;
 Lm = Lm_fine1;
 p = 3;
 
-% PSIQ formatieren: leichter Offset aus LUT (ca 5A, iq=0 Zeile wird auf 0
-% gezogen)
+% PSIQ formatieren: leichter Offset aus LUT (ca 5A, iq=0 Zeile wird auf 0 gezogen)
 [~, iq0_idx] = min(abs(iq_fine));
 PSIQ = PSIQ1 - PSIQ1(iq0_idx,:);   % zieht die iq=0-Zeile spaltenweise auf 0
 
