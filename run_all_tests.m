@@ -28,6 +28,12 @@ disp(which('test_ModelParameters', '-all'));
 disp(which('test_ModelRegression', '-all'));
 disp(which('test_StrategySelection', '-all'));
 
+% Debug-Ausgabe, ob alle nötigen Files im Repository liegen
+disp('--- DEBUG: repository files ---');
+disp(fullfile(repoRoot, 'Hackl_Pilsen_Algo.slx'));
+disp(fullfile(repoRoot, 'Messdaten_Interpoliert.m'));
+disp(fullfile(repoRoot, 'daten_nichtlinear_interpoliert.mat'));
+
 import matlab.unittest.TestRunner
 import matlab.unittest.TestSuite
 import matlab.unittest.Verbosity
