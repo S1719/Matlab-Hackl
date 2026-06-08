@@ -3,6 +3,12 @@ classdef test_StrategySelection < matlab.unittest.TestCase
     % Prüft die Strategiewahl und den gewählten Arbeitspunkt an typischen
     % Referenzpunkten.
 
+    % Strategie-Codes:
+    %   1 = MTPC
+    %   2 = Field-Weakening / torque on voltage ellipse
+    %   3 = Boundary torque tracking
+    %   4 = Saturation at i_feas
+
     properties (Constant)
         MODEL = 'Hackl_Pilsen_Algo'
         INIT_SCRIPT = 'Messdaten_Interpoliert'
@@ -22,8 +28,8 @@ classdef test_StrategySelection < matlab.unittest.TestCase
         STRAT_FW_TORQUE_ELLIPSE = 2  % T* und Spannungsgrenze
         STRAT_BOUNDARY_TRACKING = 3  % Grenzverfolgung entlang einer Begrenzung, bevor harte Sättigung eintritt
         STRAT_SATURATION_IFEAS  = 4  % gewünschter Betriebspunkt nicht mehr erreichbar, 
-        % daher Sättigung auf zulässigen Grenzpunkt 
-        % (Spannungsgrenze und Stromgrenze)
+                                     % daher Sättigung auf zulässigen Grenzpunkt 
+                                     % (Spannungsgrenze und Stromgrenze)
 
         N_MTPC = 2000    % MTPC: Erwartet id* = -61.0106 A, 
         T_MTPC = 50      %                iq* =  52.7107 A
@@ -44,19 +50,27 @@ classdef test_StrategySelection < matlab.unittest.TestCase
         function prepareModel(tc)
             % Initialisierungsskript ausführen, damit die Kennfelddaten
             % im Base Workspace verfügbar sind.
-            evalin('base', tc.INIT_SCRIPT);
+            repoRoot = localGetRepoRoot();
+            initScriptFile = fullfile(repoRoot, [tc.INIT_SCRIPT '.m']);
+            modelFile = fullfile(repoRoot, [tc.MODEL '.slx']);
 
-            tc.assumeTrue( ...
-                exist([tc.MODEL '.slx'], 'file') == 2 || exist([tc.MODEL '.mdl'], 'file') == 2, ...
-                sprintf('Modell %s wurde nicht gefunden.', tc.MODEL));
+            tc.assumeTrue(exist(initScriptFile, 'file') == 2, ...
+                sprintf('Initialisierungsskript wurde nicht gefunden: %s', initScriptFile));
             tc.assumeNotEmpty(which('load_system'), ...
                 'Simulink ist in der CI-Umgebung nicht verfügbar.');
             tc.assumeTrue(license('test', 'Simulink'), ...
                 'Keine Simulink-Lizenz in der CI-Umgebung verfügbar.');
+            tc.assumeTrue(exist(modelFile, 'file') == 2, ...
+                sprintf('Modell-Datei wurde nicht gefunden: %s', modelFile));
 
-            load_system(tc.MODEL);
+            addpath(repoRoot);
+            evalin('base', tc.INIT_SCRIPT);
+
+            disp("Lade Simulink-Modell: " + modelFile);
+            load_system(modelFile);
         end
     end
+
 
     methods (TestMethodTeardown)
         function closeModel(tc)
@@ -83,12 +97,9 @@ classdef test_StrategySelection < matlab.unittest.TestCase
 
             tc.verifyEqual(out.strategie, tc.STRAT_MTPC, ...
                 'Am MTPC-Referenzpunkt wurde nicht Strategie 1 (MTPC) gewählt.');
-
             tc.verifyTrue(isfinite(out.id_ref) && isfinite(out.iq_ref), ...
                 'MTPC-Test: id_ref oder iq_ref ist nicht endlich.');
-
-            tc.verifyLessThanOrEqual( ...
-                hypot(out.id_ref, out.iq_ref), out.I_max + tc.CURRENT_TOL, ...
+            tc.verifyLessThanOrEqual(hypot(out.id_ref, out.iq_ref), out.I_max + tc.CURRENT_TOL, ...
                 'MTPC-Test: gewählter Arbeitspunkt verletzt I_max.');
         end
 
@@ -98,14 +109,14 @@ classdef test_StrategySelection < matlab.unittest.TestCase
             tc.verifyEqual(out.strategie, tc.STRAT_FW_TORQUE_ELLIPSE, ...
                 ['Am Referenzpunkt für Field-Weakening / torque on voltage ellipse ' ...
                  'wurde nicht Strategie 2 gewählt.']);
-
+                 
             tc.verifyTrue(isfinite(out.id_ref) && isfinite(out.iq_ref), ...
                 'FW-/Voltage-Ellipse-Test: id_ref oder iq_ref ist nicht endlich.');
-
-            tc.verifyLessThanOrEqual( ...
-                hypot(out.id_ref, out.iq_ref), out.I_max + tc.CURRENT_TOL, ...
+                
+            tc.verifyLessThanOrEqual(hypot(out.id_ref, out.iq_ref), out.I_max + tc.CURRENT_TOL, ...
                 'FW-/Voltage-Ellipse-Test: gewählter Arbeitspunkt verletzt I_max.');
         end
+
 
         function test_boundary_torque_tracking_reference_point(tc)
             out = localRunCase(tc, tc.N_BOUNDARY_TRACKING, tc.T_BOUNDARY_TRACKING);
@@ -161,6 +172,9 @@ classdef test_StrategySelection < matlab.unittest.TestCase
 end
 
 function out = localRunCase(tc, n_mech_value, T_soll_value)
+    repoRoot = localGetRepoRoot();
+    addpath(repoRoot);
+
     evalin('base', tc.INIT_SCRIPT);
 
     I_max = tc.readConstant(tc.BLK_Imax);
@@ -169,6 +183,10 @@ function out = localRunCase(tc, n_mech_value, T_soll_value)
     in = in.setVariable(tc.INPUT_SPEED_VAR, n_mech_value);
     in = in.setVariable(tc.INPUT_TORQUE_VAR, T_soll_value);
 
+    disp("Starte Strategie-Test-Simulation: " + tc.MODEL + ...
+        " | n_mech=" + num2str(n_mech_value) + ...
+        " | T_soll=" + num2str(T_soll_value));
+
     simOut = sim(in);
 
     out.id_ref = localExtractLastValue(simOut, tc.SIGNAL_ID_REF);
@@ -176,6 +194,7 @@ function out = localRunCase(tc, n_mech_value, T_soll_value)
     out.strategie = localExtractLastValue(simOut, tc.SIGNAL_STRAT);
     out.I_max = I_max;
 end
+
 
 function value = localExtractLastValue(simOut, sigName)
     data = [];
@@ -228,4 +247,10 @@ function value = localExtractLastValue(simOut, sigName)
     else
         value = data;
     end
+end
+
+function repoRoot = localGetRepoRoot()
+    thisFile = mfilename('fullpath');
+    testsDir = fileparts(thisFile);
+    repoRoot = fileparts(testsDir);
 end
