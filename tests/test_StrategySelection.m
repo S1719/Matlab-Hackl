@@ -54,14 +54,17 @@ classdef test_StrategySelection < matlab.unittest.TestCase
             initScriptFile = fullfile(repoRoot, [tc.INIT_SCRIPT '.m']);
             modelFile = fullfile(repoRoot, [tc.MODEL '.slx']);
 
-            tc.assumeTrue(exist(initScriptFile, 'file') == 2, ...
+            tc.assertTrue(exist(initScriptFile, 'file') == 2, ...
                 sprintf('Initialisierungsskript wurde nicht gefunden: %s', initScriptFile));
-            tc.assumeNotEmpty(which('load_system'), ...
-                'Simulink ist in der CI-Umgebung nicht verfügbar.');
-            tc.assumeTrue(license('test', 'Simulink'), ...
-                'Keine Simulink-Lizenz in der CI-Umgebung verfügbar.');
-            tc.assumeTrue(exist(modelFile, 'file') == 2, ...
+
+            tc.assertTrue(exist(modelFile, 'file') == 2, ...
                 sprintf('Modell-Datei wurde nicht gefunden: %s', modelFile));
+
+            tc.assertTrue(exist('load_system', 'file') == 2, ...
+                'Die Funktion "load_system" ist nicht verfügbar. Simulink fehlt vermutlich.');
+
+            tc.assertTrue(license('test', 'Simulink'), ...
+                'Es ist keine Simulink-Lizenz verfügbar.');
 
             addpath(repoRoot);
             evalin('base', tc.INIT_SCRIPT);
@@ -85,7 +88,7 @@ classdef test_StrategySelection < matlab.unittest.TestCase
 
     methods (Static)
         function val = readConstant(blockPath)
-            % Liest den numerischen Wert eines Konstantenblocks aus.
+            % Liest einen Konstantenwert aus dem Modell und wandelt ihn um.
             raw = get_param(blockPath, 'Value');
             val = str2double(raw);
         end
@@ -172,9 +175,11 @@ classdef test_StrategySelection < matlab.unittest.TestCase
 end
 
 function out = localRunCase(tc, n_mech_value, T_soll_value)
+    % Führt genau einen Testfall aus und liest die relevanten Ausgangswerte
     repoRoot = localGetRepoRoot();
     addpath(repoRoot);
 
+    % Initialisierung vor jedem einzelnen Testfall erneut ausführen
     evalin('base', tc.INIT_SCRIPT);
 
     I_max = tc.readConstant(tc.BLK_Imax);
@@ -197,6 +202,7 @@ end
 
 
 function value = localExtractLastValue(simOut, sigName)
+    % Liest den letzten verfügbaren Wert eines Signals aus dem SimulationOutput
     data = [];
     value = [];
 
@@ -250,6 +256,7 @@ function value = localExtractLastValue(simOut, sigName)
 end
 
 function repoRoot = localGetRepoRoot()
+    % Bestimmt aus dem Speicherort dieser Testdatei den Repository-Root
     thisFile = mfilename('fullpath');
     testsDir = fileparts(thisFile);
     repoRoot = fileparts(testsDir);
