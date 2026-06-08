@@ -4,9 +4,9 @@ classdef test_ModelParameters < matlab.unittest.TestCase
     % vorhanden sind und sinnvolle numerische Werte besitzen.
 
     properties (Constant)
-        % Name des Simulink-Modells ohne Dateiendung
+        % Name des Simulink-Modells 
         MODEL = 'Hackl_Pilsen_Algo'
-
+        
         % Pfade zu den relevanten Konstantenblöcken im Modell
         BLK_Rs   = 'Hackl_Pilsen_Algo/Maschinendaten/Rs'
         BLK_Imax = 'Hackl_Pilsen_Algo/Maschinendaten/I_max'
@@ -17,14 +17,19 @@ classdef test_ModelParameters < matlab.unittest.TestCase
 
     methods (TestMethodSetup)
         function prepareModel(tc)
+            repoRoot = localGetRepoRoot();
+            modelFile = fullfile(repoRoot, [tc.MODEL '.slx']);
+            
             % Prüfen, ob Simulink in der aktuellen Umgebung verfügbar ist
             tc.assumeNotEmpty(which('load_system'), ...
                 'Simulink ist in der CI-Umgebung nicht verfügbar.');
             tc.assumeTrue(license('test', 'Simulink'), ...
                 'Keine Simulink-Lizenz in der CI-Umgebung verfügbar.');
+            tc.assumeTrue(exist(modelFile, 'file') == 2, ...
+                sprintf('Modell-Datei wurde nicht gefunden: %s', modelFile));
 
             % Modell laden
-            load_system(tc.MODEL);
+            load_system(modelFile);
         end
     end
 
@@ -101,4 +106,10 @@ classdef test_ModelParameters < matlab.unittest.TestCase
             tc.verifyGreaterThan(n_max, 0, 'n_max muss > 0 sein.');
         end
     end
+end
+
+function repoRoot = localGetRepoRoot()
+    thisFile = mfilename('fullpath');
+    testsDir = fileparts(thisFile);
+    repoRoot = fileparts(testsDir);
 end
