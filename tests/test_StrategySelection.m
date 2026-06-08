@@ -77,7 +77,7 @@ classdef test_StrategySelection < matlab.unittest.TestCase
 
     methods (TestMethodTeardown)
         function closeModel(tc)
-            if exist('bdclose', 'file') == 2
+            if isfile(modelFile)
                 try
                     bdclose(tc.MODEL);
                 catch
