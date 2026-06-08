@@ -6,6 +6,7 @@ function run_all_tests
     repoRoot = fileparts(mfilename('fullpath'));
     testsDir = fullfile(repoRoot, 'tests');
     resultsDir = fullfile(repoRoot, 'test-results');
+    xmlFile = fullfile(resultsDir, 'junit_results.xml');
 
     % Relevante Pfade hinzufügen
     addpath(repoRoot);
@@ -16,8 +17,20 @@ function run_all_tests
             'Der Ordner "%s" wurde nicht gefunden.', testsDir);
     end
 
-    if ~isfolder(testsDir)
-        mkdir(resultsDir);
+    % Ergebnisordner zuverlässig erzeugen
+    if ~isfolder(resultsDir)
+        [status, msg, msgID] = mkdir(resultsDir);
+        if ~status
+            error('run_all_tests:CreateResultsFolderFailed', ...
+                'Der Ordner "%s" konnte nicht angelegt werden. MATLAB-Meldung: %s (%s)', ...
+                resultsDir, msg, msgID);
+         end
+    end
+
+    % Zusätzliche Prüfung 
+    if ~isfolder(resultsDir)
+        error('run_all_tests:ResultsFolderMissing', ...
+            'Der Ergebnisordner "%s" existiert nach mkdir weiterhin nicht.', resultsDir);
     end
 
 % Debug-Ausgaben zur Pfadauflösung
@@ -34,6 +47,11 @@ disp(fullfile(repoRoot, 'Hackl_Pilsen_Algo.slx'));
 disp(fullfile(repoRoot, 'Messdaten_Interpoliert.m'));
 disp(fullfile(repoRoot, 'daten_nichtlinear_interpoliert.mat'));
 
+% Debug, ob alle nötigen Pfade existieren
+disp('--- DEBUG: result paths ---');
+fprintf('resultsDir exists: %d -> %s\n', isfolder(resultsDir), resultsDir);
+fprintf('xmlFile target: %s\n', xmlFile);
+
 import matlab.unittest.TestRunner
 import matlab.unittest.TestSuite
 import matlab.unittest.Verbosity
@@ -42,7 +60,7 @@ import matlab.unittest.plugins.XMLPlugin
 suite = TestSuite.fromFolder(testsDir, 'IncludingSubfolders', true);
 
 runner = TestRunner.withTextOutput('OutputDetail', Verbosity.Detailed);
-runner.addPlugin( ...
+runner.addPlugin( ...    % Plugin erst hinzufügen, nachdem der Zielordner sicher existiert
     XMLPlugin.producingJUnitFormat(fullfile(resultsDir, 'junit_results.xml')));
 
 results = runner.run(suite);
