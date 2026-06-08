@@ -19,13 +19,8 @@ classdef test_ModelParameters < matlab.unittest.TestCase
         function prepareModel(tc)
             repoRoot = localGetRepoRoot();
             modelFile = fullfile(repoRoot, [tc.MODEL '.slx']);
-            
-            % Prüfen, ob Simulink in der aktuellen Umgebung verfügbar ist
-            tc.assumeNotEmpty(which('load_system'), ...
-                'Simulink ist in der CI-Umgebung nicht verfügbar.');
-            tc.assumeTrue(license('test', 'Simulink'), ...
-                'Keine Simulink-Lizenz in der CI-Umgebung verfügbar.');
-            tc.assumeTrue(exist(modelFile, 'file') == 2, ...
+
+            tc.assertTrue(exist(modelFile, 'file') == 2, ...
                 sprintf('Modell-Datei wurde nicht gefunden: %s', modelFile));
 
             % Modell laden
