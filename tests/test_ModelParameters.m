@@ -39,7 +39,7 @@ classdef test_ModelParameters < matlab.unittest.TestCase
     methods (TestMethodTeardown)
         function closeModel(tc)
             % Modell am Ende sauber schließen.
-            if exist('bdIsLoaded', 'file') == 2
+            if isfile(modelFile)
                 if bdIsLoaded(tc.MODEL)
                     close_system(tc.MODEL, 0);
                 end
