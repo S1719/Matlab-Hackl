@@ -26,22 +26,22 @@ classdef test_ModelRegression < matlab.unittest.TestCase
     methods (Test)
         function test_regression_against_baseline(tc)
             repoRoot = localGetRepoRoot();
+            initScriptFile = fullfile(repoRoot, [tc.INIT_SCRIPT '.m']);
+            modelFile = fullfile(repoRoot, [tc.MODEL '.slx']);
             baselineDir = fullfile(repoRoot, 'baseline');
             baselineFile = fullfile(baselineDir, [tc.MODEL '_baseline.mat']);
 
-            tc.assumeTrue(exist([tc.INIT_SCRIPT '.m'], 'file') == 2, ...
-                sprintf('Initialisierungsskript %s.m wurde nicht gefunden.', tc.INIT_SCRIPT));
+            tc.assumeTrue(exist(initScriptFile, 'file') == 2, ...
+                sprintf('Initialisierungsskript wurde nicht gefunden: %s', initScriptFile));
 
             tc.assumeNotEmpty(which('load_system'), ...
                 'Simulink ist in der CI-Umgebung nicht verfügbar.');
             tc.assumeTrue(license('test', 'Simulink'), ...
                 'Keine Simulink-Lizenz in der CI-Umgebung verfügbar.');
+            tc.assumeTrue(exist(modelFile, 'file') == 2, ...
+                sprintf('Modell-Datei wurde nicht gefunden: %s', modelFile));
 
-            tc.assumeTrue( ...
-                exist([tc.MODEL '.slx'], 'file') == 2 || exist([tc.MODEL '.mdl'], 'file') == 2, ...
-                sprintf('Modell %s wurde nicht gefunden.', tc.MODEL));
-
-            current = localRunAllCases(tc);
+            current = localRunAllCases(tc, repoRoot, modelFile);
 
             createBaseline = strcmpi(getenv('CREATE_BASELINE'), '1');
             updateBaseline = strcmpi(getenv('UPDATE_BASELINE'), '1');
@@ -71,7 +71,6 @@ classdef test_ModelRegression < matlab.unittest.TestCase
 
             tc.verifyEqual(current.model, baseline.model, ...
                 'Baseline passt nicht zum aktuell getesteten Modell.');
-
             tc.verifyEqual(numel(current.cases), numel(baseline.cases), ...
                 'Anzahl der Testfälle stimmt nicht mit der Baseline überein.');
 
@@ -99,7 +98,6 @@ classdef test_ModelRegression < matlab.unittest.TestCase
                         sprintf('Zeitvektor von %s hat eine andere Größe als in der Baseline.', sigName));
                     tc.verifyLessThanOrEqual(max(abs(tCur - tRef)), tc.TIME_TOL, ...
                         sprintf('Zeitvektor von %s unterscheidet sich von der Baseline.', sigName));
-
                     tc.verifyEqual(size(yCur), size(yRef), ...
                         sprintf('Signal %s hat eine andere Größe als in der Baseline.', sigName));
 
@@ -121,12 +119,14 @@ classdef test_ModelRegression < matlab.unittest.TestCase
     end
 end
 
-function current = localRunAllCases(tc)
+
+function current = localRunAllCases(tc, repoRoot, modelFile)
     current = struct();
     current.model = tc.MODEL;
     current.cases = struct([]);
 
-    load_system(tc.MODEL);
+    addpath(repoRoot);
+    load_system(modelFile);
     cleanupObj = onCleanup(@() close_system(tc.MODEL, 0)); %#ok<NASGU>
 
     for i = 1:numel(tc.N_TEST)
@@ -138,6 +138,9 @@ function current = localRunAllCases(tc)
         in = Simulink.SimulationInput(tc.MODEL);
         in = in.setVariable(tc.INPUT_SPEED_VAR, nVal);
         in = in.setVariable(tc.INPUT_TORQUE_VAR, tVal);
+
+        disp("Starte Regressionstest-Simulation: " + tc.MODEL + ...
+            " | n_mech=" + num2str(nVal) + " | T_soll=" + num2str(tVal));
 
         simOut = sim(in);
 
@@ -166,6 +169,7 @@ function [t, y] = localExtractSignal(simOut, sigName)
     t = [];
     y = [];
 
+    % 1) logsout
     try
         logs = simOut.logsout;
         if ~isempty(logs)
@@ -180,6 +184,7 @@ function [t, y] = localExtractSignal(simOut, sigName)
     catch
     end
 
+    % 2) yout
     try
         yout = simOut.get('yout');
         if isa(yout, 'Simulink.SimulationData.Dataset')
@@ -194,6 +199,7 @@ function [t, y] = localExtractSignal(simOut, sigName)
     catch
     end
 
+    % 3) Direkt gespeicherte Variable
     try
         candidate = simOut.get(sigName);
         [t, y] = localConvertCandidate(candidate);
