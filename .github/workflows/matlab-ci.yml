@@ -2,36 +2,81 @@ name: MATLAB CI
 
 on:		# Trigger workflow bei push und pull request -> für "main" und "master" branch
   push:
-    branches: [main, master]
+    branches: 
+      - main
+      - master
+      - develop
   pull_request:
-    branches: [main, master]
+    branches:                                  # [main, master]
   workflow_dispatch:
 
 jobs:
   test:
+    name: MATLAB and Simulink Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
       - name: Repository auschecken             # Repository prüfen
         uses: actions/checkout@v4
 
-      - name: MATLAB einrichten                 # Matlab einrichten/starten
+      - name: MATLAB mit Simulink einrichten
         uses: matlab-actions/setup-matlab@v2
+        with:
+          products: Simulink
 
-      - name: MATLAB/Simulink Diagnose
+      - name: Umgebung und Verfügbarkeit diagnostizieren
         uses: matlab-actions/run-command@v2
         with:
-          command: "ver; which load_system -all; license('test','Simulink')"
+          command: |
+            clc
+            disp('=== MATLAB / Simulink CI Diagnose ===')
+            fprintf('Aktueller Ordner: %s\n', pwd)
 
-      - name: MATLAB-/Simulink-Tests ausführen  # Simulink testen
+            repoRoot = pwd;
+            modelFile = fullfile(repoRoot, 'Hackl_Pilsen_Algo.slx');
+            initFile  = fullfile(repoRoot, 'Messdaten_Interpoliert.m');
+            lutFile   = fullfile(repoRoot, 'LUT_BRUSA_jax_grad.mat');
+            dataFile  = fullfile(repoRoot, 'daten_nichtlinear_interpoliert.mat');
+            testsDir  = fullfile(repoRoot, 'tests');
+
+            fprintf('MATLAB Version: %s\n', version)
+            fprintf('load_system verfügbar: %d\n', exist('load_system', 'file') == 2)
+            fprintf('Simulink Lizenz verfügbar: %d\n', license('test', 'Simulink'))
+
+            fprintf('Modell vorhanden: %d -> %s\n', exist(modelFile, 'file') == 2, modelFile)
+            fprintf('Init-Skript vorhanden: %d -> %s\n', exist(initFile, 'file') == 2, initFile)
+            fprintf('LUT vorhanden: %d -> %s\n', exist(lutFile, 'file') == 2, lutFile)
+            fprintf('Interpolierte Daten vorhanden: %d -> %s\n', exist(dataFile, 'file') == 2, dataFile)
+            fprintf('Tests-Ordner vorhanden: %d -> %s\n', exist(testsDir, 'dir') == 7, testsDir)
+
+            disp('--- Inhalt des Repository-Root ---')
+            disp(string(ls(repoRoot)))
+
+            disp('--- Inhalt des tests-Ordners ---')
+            if exist(testsDir, 'dir') == 7
+                disp(string(ls(testsDir)))
+            end
+
+            assert(exist('load_system', 'file') == 2, ...
+                'Simulink ist nicht verfügbar: load_system fehlt.')
+            assert(license('test', 'Simulink'), ...
+                'Simulink-Lizenz ist nicht verfügbar.')
+            assert(exist(modelFile, 'file') == 2, ...
+                'Modell-Datei Hackl_Pilsen_Algo.slx wurde nicht gefunden.')
+            assert(exist(initFile, 'file') == 2, ...
+                'Initialisierungsskript Messdaten_Interpoliert.m wurde nicht gefunden.')
+
+            disp('Versuche Modell zu laden ...')
+            load_system(modelFile)
+            fprintf('Modell erfolgreich geladen: %s\n', bdroot)
+            close_system(bdroot, 0)
+
+            disp('=== Diagnose erfolgreich abgeschlossen ===')
+
+      - name: Tests ausführen
         uses: matlab-actions/run-command@v2
         with:
-          command: "cd(getenv('MW_ORIG_WORKING_FOLDER')); addpath(genpath(pwd)); run_all_tests"
-
-      - name: Testergebnisse hochladen          # Testergebnisse sichern
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: matlab-test-results
-          path: test-results/
-          if-no-files-found: warn
+          command: |
+            addpath(genpath(pwd));
+            run_all_tests
