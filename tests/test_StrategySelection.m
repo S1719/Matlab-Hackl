@@ -48,16 +48,18 @@ classdef test_StrategySelection < matlab.unittest.TestCase
 
     methods (TestMethodSetup)
         function prepareModel(tc)
+            rehash
             % Initialisierungsskript ausführen, damit die Kennfelddaten
             % im Base Workspace verfügbar sind.
             repoRoot = localGetRepoRoot();
             initScriptFile = fullfile(repoRoot, [tc.INIT_SCRIPT '.m']);
             modelFile = fullfile(repoRoot, [tc.MODEL '.slx']);
 
-            tc.assertTrue(exist(initScriptFile, 'file') == 2, ...
-                sprintf('Initialisierungsskript wurde nicht gefunden: %s', initScriptFile));
+            fprintf('DEBUG prepareModel repoRoot: %s\n', repoRoot);
+            fprintf('DEBUG prepareModel modelFile: %s\n', modelFile);
+            fprintf('DEBUG prepareModel isfile(modelFile): %d\n', isfile(modelFile));
 
-            tc.assertTrue(exist(modelFile, 'file') == 2, ...
+            tc.assertTrue(isfile(modelFile), ...
                 sprintf('Modell-Datei wurde nicht gefunden: %s', modelFile));
 
             tc.assertTrue(exist('load_system', 'file') == 2, ...
@@ -66,26 +68,20 @@ classdef test_StrategySelection < matlab.unittest.TestCase
             tc.assertTrue(license('test', 'Simulink'), ...
                 'Es ist keine Simulink-Lizenz verfügbar.');
 
-            addpath(repoRoot);
-            evalin('base', tc.INIT_SCRIPT);
-
-            disp("Lade Simulink-Modell: " + modelFile);
             load_system(modelFile);
         end
     end
 
-
     methods (TestMethodTeardown)
         function closeModel(tc)
-            if isfile(modelFile)
-                try
-                    bdclose(tc.MODEL);
-                catch
+            if exist('bdIsLoaded', 'file') == 2
+                if bdIsLoaded(tc.MODEL)
+                    close_system(tc.MODEL, 0);
                 end
             end
         end
     end
-
+    
     methods (Static)
         function val = readConstant(blockPath)
             % Liest einen Konstantenwert aus dem Modell und wandelt ihn um.
