@@ -11,12 +11,12 @@ function run_all_tests
     addpath(repoRoot);
     addpath(testsDir);
 
-    if ~exist(testsDir, 'dir')     % Prüfung, ob Testordner vorhanden
+    if ~isfolder(testsDir)     % Prüfung, ob Testordner vorhanden
         error('run_all_tests:MissingTestsFolder', ...
             'Der Ordner "%s" wurde nicht gefunden.', testsDir);
     end
 
-    if ~exist(resultsDir, 'dir')
+    if ~isfolder(testsDir)
         mkdir(resultsDir);
     end
 
