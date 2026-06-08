@@ -27,8 +27,8 @@ classdef test_ModelParameters < matlab.unittest.TestCase
             fprintf('DEBUG prepareModel isfile(modelFile): %d\n', isfile(modelFile));
         
             % Vorbedingungen: Wenn Modell fehlt, soll Test fehlschlagen
-            c.assertTrue(isfile(modelFile), ...
-            sprintf('Modell-Datei wurde nicht gefunden: %s', modelFile));
+            tc.assertTrue(logical(isfile(modelFile)), ...
+                sprintf('Modell-Datei wurde nicht gefunden: %s', modelFile));
 
             tc.assertTrue(exist('load_system', 'file') == 2, ...
                 'Die Funktion "load_system" ist nicht verfügbar. Simulink fehlt vermutlich.');
