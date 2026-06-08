@@ -30,6 +30,8 @@ jobs:
         with:
           command: |
             clc
+            rehash
+
             disp('=== MATLAB / Simulink CI Diagnose ===')
             fprintf('Aktueller Ordner: %s\n', pwd)
 
@@ -44,28 +46,30 @@ jobs:
             fprintf('load_system verfügbar: %d\n', exist('load_system', 'file') == 2)
             fprintf('Simulink Lizenz verfügbar: %d\n', license('test', 'Simulink'))
 
-            fprintf('Modell vorhanden: %d -> %s\n', exist(modelFile, 'file') == 2, modelFile)
-            fprintf('Init-Skript vorhanden: %d -> %s\n', exist(initFile, 'file') == 2, initFile)
-            fprintf('LUT vorhanden: %d -> %s\n', exist(lutFile, 'file') == 2, lutFile)
-            fprintf('Interpolierte Daten vorhanden: %d -> %s\n', exist(dataFile, 'file') == 2, dataFile)
-            fprintf('Tests-Ordner vorhanden: %d -> %s\n', exist(testsDir, 'dir') == 7, testsDir)
+            fprintf('Modell vorhanden (isfile): %d -> %s\n', isfile(modelFile), modelFile)
+            fprintf('Init-Skript vorhanden (isfile): %d -> %s\n', isfile(initFile), initFile)
+            fprintf('LUT vorhanden (isfile): %d -> %s\n', isfile(lutFile), lutFile)
+            fprintf('Interpolierte Daten vorhanden (isfile): %d -> %s\n', isfile(dataFile), dataFile)
+            fprintf('Tests-Ordner vorhanden (isfolder): %d -> %s\n', isfolder(testsDir), testsDir)
 
             disp('--- Inhalt des Repository-Root ---')
-            disp(string(ls(repoRoot)))
+            rootListing = dir(repoRoot);
+            disp(string({rootListing.name})')
 
             disp('--- Inhalt des tests-Ordners ---')
-            if exist(testsDir, 'dir') == 7
-                disp(string(ls(testsDir)))
+            if isfolder(testsDir)
+                testsListing = dir(testsDir);
+                disp(string({testsListing.name})')
             end
 
             assert(exist('load_system', 'file') == 2, ...
                 'Simulink ist nicht verfügbar: load_system fehlt.')
             assert(license('test', 'Simulink'), ...
                 'Simulink-Lizenz ist nicht verfügbar.')
-            assert(exist(modelFile, 'file') == 2, ...
-                'Modell-Datei Hackl_Pilsen_Algo.slx wurde nicht gefunden.')
-            assert(exist(initFile, 'file') == 2, ...
-                'Initialisierungsskript Messdaten_Interpoliert.m wurde nicht gefunden.')
+            assert(isfile(modelFile), ...
+                ['Modell-Datei Hackl_Pilsen_Algo.slx wurde nicht gefunden: ' modelFile])
+            assert(isfile(initFile), ...
+                ['Initialisierungsskript Messdaten_Interpoliert.m wurde nicht gefunden: ' initFile])
 
             disp('Versuche Modell zu laden ...')
             load_system(modelFile)
