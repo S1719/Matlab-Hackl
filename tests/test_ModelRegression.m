@@ -31,21 +31,26 @@ classdef test_ModelRegression < matlab.unittest.TestCase
             baselineDir = fullfile(repoRoot, 'baseline');
             baselineFile = fullfile(baselineDir, [tc.MODEL '_baseline.mat']);
 
-            tc.assumeTrue(exist(initScriptFile, 'file') == 2, ...
+            % Harte Vorbedingungen
+            tc.assertTrue(exist(initScriptFile, 'file') == 2, ...
                 sprintf('Initialisierungsskript wurde nicht gefunden: %s', initScriptFile));
 
-            tc.assumeNotEmpty(which('load_system'), ...
-                'Simulink ist in der CI-Umgebung nicht verfügbar.');
-            tc.assumeTrue(license('test', 'Simulink'), ...
-                'Keine Simulink-Lizenz in der CI-Umgebung verfügbar.');
-            tc.assumeTrue(exist(modelFile, 'file') == 2, ...
+            tc.assertTrue(exist(modelFile, 'file') == 2, ...
                 sprintf('Modell-Datei wurde nicht gefunden: %s', modelFile));
 
+            tc.assertTrue(exist('load_system', 'file') == 2, ...
+                'Die Funktion "load_system" ist nicht verfügbar. Simulink fehlt vermutlich.');
+
+            tc.assertTrue(license('test', 'Simulink'), ...
+                'Es ist keine Simulink-Lizenz verfügbar.');
+
+            % Aktuelle Simulationen ausführen
             current = localRunAllCases(tc, repoRoot, modelFile);
 
             createBaseline = strcmpi(getenv('CREATE_BASELINE'), '1');
             updateBaseline = strcmpi(getenv('UPDATE_BASELINE'), '1');
 
+            % Baseline bewusst neu erzeugen oder aktualisieren
             if createBaseline || updateBaseline
                 if ~exist(baselineDir, 'dir')
                     mkdir(baselineDir);
@@ -59,6 +64,7 @@ classdef test_ModelRegression < matlab.unittest.TestCase
                 return;
             end
 
+            % Für normale Regressionstests muss eine Baseline vorhanden sein
             tc.assertTrue(exist(baselineFile, 'file') == 2, ...
                 ['Baseline-Datei fehlt: ' baselineFile newline ...
                  'Erzeuge sie einmal lokal mit CREATE_BASELINE=1.']);
@@ -121,6 +127,8 @@ end
 
 
 function current = localRunAllCases(tc, repoRoot, modelFile)
+    % Führt die Simulation für alle definierten Testfälle aus
+    % und sammelt die relevanten Ausgangssignale ein.
     current = struct();
     current.model = tc.MODEL;
     current.cases = struct([]);
@@ -133,6 +141,8 @@ function current = localRunAllCases(tc, repoRoot, modelFile)
         nVal = tc.N_TEST(i);
         tVal = tc.T_TEST(i);
 
+        % Initialisierungsskript vor jedem Testfall erneut ausführen,
+        % damit eine saubere Ausgangsbasis entsteht.
         evalin('base', tc.INIT_SCRIPT);
 
         in = Simulink.SimulationInput(tc.MODEL);
@@ -166,6 +176,8 @@ function current = localRunAllCases(tc, repoRoot, modelFile)
 end
 
 function [t, y] = localExtractSignal(simOut, sigName)
+    % Extrahiert ein Signal aus simOut, bevorzugt aus logsout,
+    % alternativ aus yout oder direkt gespeicherten Variablen.
     t = [];
     y = [];
 
@@ -213,6 +225,7 @@ function [t, y] = localExtractSignal(simOut, sigName)
 end
 
 function [t, y] = localConvertCandidate(candidate)
+    % Wandelt unterschiedliche Signalformate in Zeit- und Datenvektor um.
     t = [];
     y = [];
 
@@ -237,6 +250,7 @@ function [t, y] = localConvertCandidate(candidate)
 end
 
 function repoRoot = localGetRepoRoot()
+    % Bestimmt aus dem Speicherort dieser Testdatei den Repository-Root.
     thisFile = mfilename('fullpath');
     testsDir = fileparts(thisFile);
     repoRoot = fileparts(testsDir);
