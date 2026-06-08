@@ -17,13 +17,18 @@ classdef test_ModelParameters < matlab.unittest.TestCase
 
     methods (TestMethodSetup)
         function prepareModel(tc)
+            rehash
             % Repository-Root bestimmen und Modellpfad absolut aufbauen.
             repoRoot = localGetRepoRoot();
             modelFile = fullfile(repoRoot, [tc.MODEL '.slx']);
 
+            fprintf('DEBUG prepareModel repoRoot: %s\n', repoRoot);  % Debug-Ausgabe zur Überwachung
+            fprintf('DEBUG prepareModel modelFile: %s\n', modelFile);
+            fprintf('DEBUG prepareModel isfile(modelFile): %d\n', isfile(modelFile));
+        
             % Vorbedingungen: Wenn Modell fehlt, soll Test fehlschlagen
-            tc.assertTrue(exist(modelFile, 'file') == 2, ...
-                sprintf('Modell-Datei wurde nicht gefunden: %s', modelFile));
+            c.assertTrue(isfile(modelFile), ...
+            sprintf('Modell-Datei wurde nicht gefunden: %s', modelFile));
 
             tc.assertTrue(exist('load_system', 'file') == 2, ...
                 'Die Funktion "load_system" ist nicht verfügbar. Simulink fehlt vermutlich.');
@@ -31,7 +36,6 @@ classdef test_ModelParameters < matlab.unittest.TestCase
             tc.assertTrue(license('test', 'Simulink'), ...
                 'Es ist keine Simulink-Lizenz verfügbar.');
 
-            % Modell mit vollem Pfad laden, damit keine relativen Pfadprobleme auftreten.
             load_system(modelFile);
         end
     end
@@ -39,7 +43,7 @@ classdef test_ModelParameters < matlab.unittest.TestCase
     methods (TestMethodTeardown)
         function closeModel(tc)
             % Modell am Ende sauber schließen.
-            if isfile(modelFile)
+            if exist('bdIsLoaded', 'file') == 2
                 if bdIsLoaded(tc.MODEL)
                     close_system(tc.MODEL, 0);
                 end
