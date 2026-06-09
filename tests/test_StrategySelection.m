@@ -19,7 +19,7 @@ classdef test_StrategySelection < matlab.unittest.TestCase
 
         SIGNAL_ID_REF = 'id_ref'
         SIGNAL_IQ_REF = 'iq_ref'
-        SIGNAL_STRAT  = 'strategie'
+        SIGNAL_STRAT  = 'strategy'
 
         VAR_Imax = 'I_max'
         VAR_nmax = 'n_max'
@@ -47,12 +47,13 @@ classdef test_StrategySelection < matlab.unittest.TestCase
         CURRENT_TOL = 1e-6
     end
 
+    
     methods (TestMethodSetup)
         function prepareModel(tc)
             rehash
             % Initialisierungsskript ausführen, damit die Kennfelddaten
             % im Base Workspace verfügbar sind.
-            rrepoRoot = localGetRepoRoot();
+            repoRoot = localGetRepoRoot();
             modelFile = fullfile(repoRoot, [tc.MODEL '.slx']);
             dataScriptFile = fullfile(repoRoot, [tc.INIT_SCRIPT_DATA '.m']);
             limitsScriptFile = fullfile(repoRoot, [tc.INIT_SCRIPT_LIMITS '.m']);
@@ -189,8 +190,13 @@ function out = localRunCase(tc, n_mech_value, T_soll_value)
     repoRoot = localGetRepoRoot();
     addpath(repoRoot);
 
-    evalin('base', tc.INIT_SCRIPT_DATA);
-    evalin('base', tc.INIT_SCRIPT_LIMITS);
+    evalin('base', 'clear I_max n_max');
+    oldFolder = pwd;
+    cleanupObj = onCleanup(@() cd(oldFolder)); %#ok<NASGU>
+    cd(repoRoot);
+
+    run(tc.INIT_SCRIPT_DATA);
+    run(tc.INIT_SCRIPT_LIMITS);
 
     I_max = evalin('base', tc.VAR_Imax);
 
