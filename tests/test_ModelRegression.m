@@ -10,7 +10,7 @@ classdef test_ModelRegression < matlab.unittest.TestCase
         INIT_SCRIPT_1 = 'Messdaten_Interpoliert.m'
         INIT_SCRIPT_2 = 'Maschinendaten_Vorgabe.m'
 
-        SIGNALS = {'id_ref', 'iq_ref', 'strategie'}
+        SIGNALS = {'id_ref', 'iq_ref', 'strategy'}
 
         INPUT_SPEED_VAR  = 'n_mech'
         INPUT_TORQUE_VAR = 'T_soll'
