@@ -70,8 +70,6 @@ classdef test_ModelParameters < matlab.unittest.TestCase
                     close_system(tc.MODEL, 0);
                 end
             end
-
-            evalin('base', 'clear Rs I_max p U_dc U_max n_max');
         end
     end
 
