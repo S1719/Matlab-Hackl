@@ -9,8 +9,6 @@
 % Ausgabedatei:
 %   - daten_nichtlinear_interpoliert.mat
 
-clear; clc;
-
 %% 1. LUT laden 
 load('LUT_BRUSA_jax_grad.mat'); % alle Werte anpassen auf double (statt int16)  
 
