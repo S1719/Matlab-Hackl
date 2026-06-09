@@ -6,7 +6,9 @@ classdef test_ModelRegression < matlab.unittest.TestCase
 
     properties (Constant)
         MODEL = 'Hackl_Pilsen_Algo'
-        INIT_SCRIPT = 'Messdaten_Interpoliert'
+        
+        INIT_SCRIPT_1 = 'Messdaten_Interpoliert.m'
+        INIT_SCRIPT_2 = 'Maschinendaten_Vorgabe.m'
 
         SIGNALS = {'id_ref', 'iq_ref', 'strategie'}
 
@@ -26,17 +28,20 @@ classdef test_ModelRegression < matlab.unittest.TestCase
     methods (Test)
         function test_regression_against_baseline(tc)
             repoRoot = localGetRepoRoot();
-            initScriptFile = fullfile(repoRoot, [tc.INIT_SCRIPT '.m']);
             modelFile = fullfile(repoRoot, [tc.MODEL '.slx']);
+            initScriptFile1 = fullfile(repoRoot, tc.INIT_SCRIPT_1);
+            initScriptFile2 = fullfile(repoRoot, tc.INIT_SCRIPT_2);
             baselineDir = fullfile(repoRoot, 'baseline');
             baselineFile = fullfile(baselineDir, [tc.MODEL '_baseline.mat']);
 
-            % Harte Vorbedingungen
-            tc.assertTrue(exist(initScriptFile, 'file') == 2, ...
-                sprintf('Initialisierungsskript wurde nicht gefunden: %s', initScriptFile));
-
-           tc.assertEqual(isfile(modelFile), true, ...
+            tc.assertEqual(isfile(modelFile), true, ...
                 sprintf('Modell-Datei wurde nicht gefunden: %s', modelFile));
+
+            tc.assertEqual(isfile(initScriptFile1), true, ...
+                sprintf('Initialisierungsskript wurde nicht gefunden: %s', initScriptFile1));
+
+            tc.assertEqual(isfile(initScriptFile2), true, ...
+                sprintf('Initialisierungsskript wurde nicht gefunden: %s', initScriptFile2));
 
             tc.assertEqual(exist('load_system', 'file') == 2, true, ...
                 'Die Funktion "load_system" ist nicht verfügbar. Simulink fehlt vermutlich.');
@@ -44,28 +49,25 @@ classdef test_ModelRegression < matlab.unittest.TestCase
             tc.assertEqual(license('test', 'Simulink'), 1, ...
                 'Es ist keine Simulink-Lizenz verfügbar.');
 
-            % Aktuelle Simulationen ausführen
             current = localRunAllCases(tc, repoRoot, modelFile);
 
             createBaseline = strcmpi(getenv('CREATE_BASELINE'), '1');
             updateBaseline = strcmpi(getenv('UPDATE_BASELINE'), '1');
 
-            % Baseline bewusst neu erzeugen oder aktualisieren
             if createBaseline || updateBaseline
-                if ~exist(baselineDir, 'dir')
+                if ~isfolder(baselineDir)
                     mkdir(baselineDir);
                 end
 
                 baseline = current; %#ok<NASGU>
                 save(baselineFile, 'baseline');
 
-                tc.assertTrue(exist(baselineFile, 'file') == 2, ...
+                tc.assertEqual(isfile(baselineFile), true, ...
                     sprintf('Baseline-Datei konnte nicht geschrieben werden: %s', baselineFile));
                 return;
             end
 
-            % Für normale Regressionstests muss eine Baseline vorhanden sein
-            tc.assertTrue(exist(baselineFile, 'file') == 2, ...
+            tc.assertEqual(isfile(baselineFile), true, ...
                 ['Baseline-Datei fehlt: ' baselineFile newline ...
                  'Erzeuge sie einmal lokal mit CREATE_BASELINE=1.']);
 
@@ -125,7 +127,6 @@ classdef test_ModelRegression < matlab.unittest.TestCase
     end
 end
 
-
 function current = localRunAllCases(tc, repoRoot, modelFile)
     % Führt die Simulation für alle definierten Testfälle aus
     % und sammelt die relevanten Ausgangssignale ein.
@@ -141,9 +142,15 @@ function current = localRunAllCases(tc, repoRoot, modelFile)
         nVal = tc.N_TEST(i);
         tVal = tc.T_TEST(i);
 
-        % Initialisierungsskript vor jedem Testfall erneut ausführen,
+        % Initialisierungsskripte vor jedem Testfall erneut ausführen,
         % damit eine saubere Ausgangsbasis entsteht.
-        evalin('base', tc.INIT_SCRIPT);
+        evalin('base', 'clear Rs I_max p U_dc U_max n_max');
+        oldFolder = pwd;
+        cleanupObj2 = onCleanup(@() cd(oldFolder)); %#ok<NASGU>
+        cd(repoRoot);
+
+        run(tc.INIT_SCRIPT_1);
+        run(tc.INIT_SCRIPT_2);
 
         in = Simulink.SimulationInput(tc.MODEL);
         in = in.setVariable(tc.INPUT_SPEED_VAR, nVal);
@@ -181,7 +188,6 @@ function [t, y] = localExtractSignal(simOut, sigName)
     t = [];
     y = [];
 
-    % 1) logsout
     try
         logs = simOut.logsout;
         if ~isempty(logs)
@@ -196,7 +202,6 @@ function [t, y] = localExtractSignal(simOut, sigName)
     catch
     end
 
-    % 2) yout
     try
         yout = simOut.get('yout');
         if isa(yout, 'Simulink.SimulationData.Dataset')
@@ -211,7 +216,6 @@ function [t, y] = localExtractSignal(simOut, sigName)
     catch
     end
 
-    % 3) Direkt gespeicherte Variable
     try
         candidate = simOut.get(sigName);
         [t, y] = localConvertCandidate(candidate);
@@ -225,7 +229,6 @@ function [t, y] = localExtractSignal(simOut, sigName)
 end
 
 function [t, y] = localConvertCandidate(candidate)
-    % Wandelt unterschiedliche Signalformate in Zeit- und Datenvektor um.
     t = [];
     y = [];
 
@@ -250,7 +253,6 @@ function [t, y] = localConvertCandidate(candidate)
 end
 
 function repoRoot = localGetRepoRoot()
-    % Bestimmt aus dem Speicherort dieser Testdatei den Repository-Root.
     thisFile = mfilename('fullpath');
     testsDir = fileparts(thisFile);
     repoRoot = fileparts(testsDir);
