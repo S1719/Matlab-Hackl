@@ -38,6 +38,7 @@ jobs:
             repoRoot = pwd;
             modelFile = fullfile(repoRoot, 'Hackl_Pilsen_Algo.slx');
             initFile  = fullfile(repoRoot, 'Messdaten_Interpoliert.m');
+            initFile1 = fullfile(repoRoot, 'Maschinendaten_Vorgabe.m');
             lutFile   = fullfile(repoRoot, 'LUT_BRUSA_jax_grad.mat');
             dataFile  = fullfile(repoRoot, 'daten_nichtlinear_interpoliert.mat');
             dataFile1 = fullfile(repoRoot, 'Maschinendaten.mat');
@@ -49,6 +50,7 @@ jobs:
 
             fprintf('Modell vorhanden (isfile): %d -> %s\n', isfile(modelFile), modelFile)
             fprintf('Init-Skript vorhanden (isfile): %d -> %s\n', isfile(initFile), initFile)
+            fprintf('Maschinen-Skript vorhanden (isfile): %d -> %s\n', isfile(initFile1), initFile1)
             fprintf('LUT vorhanden (isfile): %d -> %s\n', isfile(lutFile), lutFile)
             fprintf('Interpolierte Daten vorhanden (isfile): %d -> %s\n', isfile(dataFile), dataFile)
             fprintf('Maschinendaten vorhanden (isfile): %d -> %s\n', isfile(dataFile1), dataFile1)
