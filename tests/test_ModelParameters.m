@@ -67,62 +67,53 @@ classdef test_ModelParameters < matlab.unittest.TestCase
         end
     end
 
-    methods (TestMethodTeardown)
+   methods (TestMethodTeardown)
         function closeModel(tc)
-            % Modell sauber schließen
             if exist('bdIsLoaded', 'file') == 2
                 if bdIsLoaded(tc.MODEL)
                     close_system(tc.MODEL, 0);
                 end
             end
 
-            % Testvariablen aus dem Base Workspace entfernen
-            evalin('base', 'clear Rs I_max p U_dc n_max');
+            evalin('base', 'clear Rs I_max p U_dc U_max n_max');
         end
     end
 
     methods (Static)
         function val = readWorkspaceVariable(varName)
-            % Liest eine Variable aus dem Base Workspace.
             val = evalin('base', varName);
         end
     end
 
     methods (Test)
         function test_required_parameters_exist(tc)
-            % Prüft, ob alle erwarteten Variablen im Base Workspace
-            % vorhanden sind.
-
-            tc.verifyEqual( ...
-                evalin('base', sprintf('exist(''%s'',''var'')', tc.VAR_Rs)), 1, ...
+            tc.verifyEqual(evalin('base', sprintf('exist(''%s'',''var'')', tc.VAR_Rs)), 1, ...
                 'Variable Rs fehlt im Base Workspace.');
 
-            tc.verifyEqual( ...
-                evalin('base', sprintf('exist(''%s'',''var'')', tc.VAR_Imax)), 1, ...
+            tc.verifyEqual(evalin('base', sprintf('exist(''%s'',''var'')', tc.VAR_Imax)), 1, ...
                 'Variable I_max fehlt im Base Workspace.');
 
-            tc.verifyEqual( ...
-                evalin('base', sprintf('exist(''%s'',''var'')', tc.VAR_p)), 1, ...
+            tc.verifyEqual(evalin('base', sprintf('exist(''%s'',''var'')', tc.VAR_p)), 1, ...
                 'Variable p fehlt im Base Workspace.');
 
-            tc.verifyEqual( ...
-                evalin('base', sprintf('exist(''%s'',''var'')', tc.VAR_Udc)), 1, ...
+            tc.verifyEqual(evalin('base', sprintf('exist(''%s'',''var'')', tc.VAR_Udc)), 1, ...
                 'Variable U_dc fehlt im Base Workspace.');
 
-            tc.verifyEqual( ...
-                evalin('base', sprintf('exist(''%s'',''var'')', tc.VAR_nmax)), 1, ...
+            tc.verifyEqual(evalin('base', sprintf('exist(''%s'',''var'')', tc.VAR_Umax)), 1, ...
+                'Variable U_max fehlt im Base Workspace.');
+
+            tc.verifyEqual(evalin('base', sprintf('exist(''%s'',''var'')', tc.VAR_nmax)), 1, ...
                 'Variable n_max fehlt im Base Workspace.');
         end
 
         function test_parameter_values_are_valid(tc)
-            % Liest die Maschinenparameter aus dem Base Workspace
             Rs    = tc.readWorkspaceVariable(tc.VAR_Rs);
             I_max = tc.readWorkspaceVariable(tc.VAR_Imax);
             p     = tc.readWorkspaceVariable(tc.VAR_p);
             U_dc  = tc.readWorkspaceVariable(tc.VAR_Udc);
+            U_max = tc.readWorkspaceVariable(tc.VAR_Umax);
             n_max = tc.readWorkspaceVariable(tc.VAR_nmax);
 
-            % Prüfen, ob alle Werte numerisch, skalar und endlich sind
             tc.verifyTrue(isnumeric(Rs) && isscalar(Rs) && isfinite(Rs), ...
                 'Rs muss numerisch, skalar und endlich sein.');
 
@@ -135,22 +126,24 @@ classdef test_ModelParameters < matlab.unittest.TestCase
             tc.verifyTrue(isnumeric(U_dc) && isscalar(U_dc) && isfinite(U_dc), ...
                 'U_dc muss numerisch, skalar und endlich sein.');
 
+            tc.verifyTrue(isnumeric(U_max) && isscalar(U_max) && isfinite(U_max), ...
+                'U_max muss numerisch, skalar und endlich sein.');
+
             tc.verifyTrue(isnumeric(n_max) && isscalar(n_max) && isfinite(n_max), ...
                 'n_max muss numerisch, skalar und endlich sein.');
 
-            % Plausibilitätsprüfungen
             tc.verifyGreaterThanOrEqual(Rs, 0, 'Rs muss >= 0 sein.');
             tc.verifyGreaterThan(I_max, 0, 'I_max muss > 0 sein.');
             tc.verifyGreaterThan(p, 0, 'p muss > 0 sein.');
             tc.verifyEqual(p, round(p), 'p muss ganzzahlig sein.');
             tc.verifyGreaterThan(U_dc, 0, 'U_dc muss > 0 sein.');
+            tc.verifyGreaterThan(U_max, 0, 'U_max muss > 0 sein.');
             tc.verifyGreaterThan(n_max, 0, 'n_max muss > 0 sein.');
         end
     end
 end
 
 function repoRoot = localGetRepoRoot()
-    % Bestimmt aus dem Speicherort dieser Testdatei den Repository-Root.
     thisFile = mfilename('fullpath');
     testsDir = fileparts(thisFile);
     repoRoot = fileparts(testsDir);
