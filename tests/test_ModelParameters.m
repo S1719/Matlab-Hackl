@@ -7,8 +7,9 @@ classdef test_ModelParameters < matlab.unittest.TestCase
         % Name des Simulink-Modells 
         MODEL = 'Hackl_Pilsen_Algo'
         
-        % MATLAB-Skript, das die Daten lädt bzw. vorbereitet
-        DATA_SCRIPT = 'Maschinendaten_Vorgabe.m'
+        % Initialisierungsskripte
+        DATA_SCRIPT_1 = 'Messdaten_Interpoliert.m'
+        DATA_SCRIPT_2 = 'Maschinendaten_Vorgabe.m'
 
         % Erwartete Variablennamen im Workspace
         VAR_Rs   = 'Rs'
@@ -26,18 +27,22 @@ classdef test_ModelParameters < matlab.unittest.TestCase
             % Repository-Root bestimmen
             repoRoot = localGetRepoRoot();
             modelFile = fullfile(repoRoot, [tc.MODEL '.slx']);
-            dataScriptFile = fullfile(repoRoot, tc.DATA_SCRIPT);
+            dataScriptFile1 = fullfile(repoRoot, tc.DATA_SCRIPT_1);
+            dataScriptFile2 = fullfile(repoRoot, tc.DATA_SCRIPT_2);
 
             fprintf('DEBUG prepareModel repoRoot: %s\n', repoRoot);
-            fprintf('DEBUG prepareModel modelFile: %s\n', modelFile);
-            fprintf('DEBUG prepareModel dataScriptFile: %s\n', dataScriptFile);
+            fprintf('DEBUG prepareModel dataScriptFile1: %s\n', dataScriptFile1);
+            fprintf('DEBUG prepareModel dataScriptFile2: %s\n', dataScriptFile2);
 
             % Vorbedingungen hart prüfen
             tc.assertEqual(isfile(modelFile), true, ...
                 sprintf('Modell-Datei wurde nicht gefunden: %s', modelFile));
 
-            tc.assertEqual(isfile(dataScriptFile), true, ...
-                sprintf('Datenskript wurde nicht gefunden: %s', dataScriptFile));
+            tc.assertEqual(isfile(dataScriptFile1), true, ...
+                sprintf('Datenskript wurde nicht gefunden: %s', dataScriptFile1));
+
+            tc.assertEqual(isfile(dataScriptFile2), true, ...
+                sprintf('Datenskript wurde nicht gefunden: %s', dataScriptFile2));
 
             tc.assertEqual(exist('load_system', 'file') == 2, true, ...
                 'Die Funktion "load_system" ist nicht verfügbar. Simulink fehlt vermutlich.');
@@ -45,14 +50,17 @@ classdef test_ModelParameters < matlab.unittest.TestCase
             tc.assertEqual(license('test', 'Simulink'), 1, ...
                 'Es ist keine Simulink-Lizenz verfügbar.');
 
-            % Base Workspace bereinigen, damit keine Altwerte mitlaufen
+
+            % Base Workspace bereinigen, damit keine Altwerte in den Test laufen
             evalin('base', 'clear Rs I_max p U_dc n_max');
 
-            % Datenskript im Repository-Root ausführen
+            % Initialisierungsskripte im Repository-Root ausführen
             oldFolder = pwd;
-            cleanupObj = onCleanup(@() cd(oldFolder));
+            cleanupObj = onCleanup(@() cd(oldFolder)); %#ok<NASGU>
             cd(repoRoot);
-            run(tc.DATA_SCRIPT);
+
+            run(tc.DATA_SCRIPT_1);
+            run(tc.DATA_SCRIPT_2);
 
             % Modell laden
             load_system(modelFile);
@@ -102,10 +110,6 @@ classdef test_ModelParameters < matlab.unittest.TestCase
                 'Variable U_dc fehlt im Base Workspace.');
 
             tc.verifyEqual( ...
-                evalin('base', sprintf('exist(''%s'',''var'')', tc.VAR_Umax)), 1, ...
-                'Variable U_max fehlt im Base Workspace.');
-
-            tc.verifyEqual( ...
                 evalin('base', sprintf('exist(''%s'',''var'')', tc.VAR_nmax)), 1, ...
                 'Variable n_max fehlt im Base Workspace.');
         end
@@ -116,10 +120,9 @@ classdef test_ModelParameters < matlab.unittest.TestCase
             I_max = tc.readWorkspaceVariable(tc.VAR_Imax);
             p     = tc.readWorkspaceVariable(tc.VAR_p);
             U_dc  = tc.readWorkspaceVariable(tc.VAR_Udc);
-            U_max = tc.readWorkspaceVariable(tc.VAR_Umax);
             n_max = tc.readWorkspaceVariable(tc.VAR_nmax);
 
-            % Prüfen, ob alle Werte numerisch und endlich sind
+            % Prüfen, ob alle Werte numerisch, skalar und endlich sind
             tc.verifyTrue(isnumeric(Rs) && isscalar(Rs) && isfinite(Rs), ...
                 'Rs muss numerisch, skalar und endlich sein.');
 
@@ -132,9 +135,6 @@ classdef test_ModelParameters < matlab.unittest.TestCase
             tc.verifyTrue(isnumeric(U_dc) && isscalar(U_dc) && isfinite(U_dc), ...
                 'U_dc muss numerisch, skalar und endlich sein.');
 
-            tc.verifyTrue(isnumeric(U_max) && isscalar(U_max) && isfinite(U_max), ...
-                'U_max muss numerisch, skalar und endlich sein.');
-            
             tc.verifyTrue(isnumeric(n_max) && isscalar(n_max) && isfinite(n_max), ...
                 'n_max muss numerisch, skalar und endlich sein.');
 
@@ -144,7 +144,6 @@ classdef test_ModelParameters < matlab.unittest.TestCase
             tc.verifyGreaterThan(p, 0, 'p muss > 0 sein.');
             tc.verifyEqual(p, round(p), 'p muss ganzzahlig sein.');
             tc.verifyGreaterThan(U_dc, 0, 'U_dc muss > 0 sein.');
-            tc.verifyGreaterThan(U_max, 0, 'U_max muss > 0 sein.');
             tc.verifyGreaterThan(n_max, 0, 'n_max muss > 0 sein.');
         end
     end
