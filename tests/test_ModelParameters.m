@@ -50,10 +50,6 @@ classdef test_ModelParameters < matlab.unittest.TestCase
             tc.assertEqual(license('test', 'Simulink'), 1, ...
                 'Es ist keine Simulink-Lizenz verfügbar.');
 
-
-            % Base Workspace bereinigen, damit keine Altwerte in den Test laufen
-            evalin('base', 'clear Rs I_max p U_dc n_max');
-
             % Initialisierungsskripte im Repository-Root ausführen
             oldFolder = pwd;
             cleanupObj = onCleanup(@() cd(oldFolder)); %#ok<NASGU>
