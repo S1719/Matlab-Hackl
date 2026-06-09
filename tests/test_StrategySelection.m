@@ -11,7 +11,8 @@ classdef test_StrategySelection < matlab.unittest.TestCase
 
     properties (Constant)
         MODEL = 'Hackl_Pilsen_Algo'
-        INIT_SCRIPT = 'Messdaten_Interpoliert'
+        INIT_SCRIPT_DATA = 'Messdaten_Interpoliert'
+        INIT_SCRIPT_LIMITS = 'Maschinendaten_Vorgabe'
 
         INPUT_SPEED_VAR  = 'n_mech'
         INPUT_TORQUE_VAR = 'T_soll'
@@ -20,8 +21,8 @@ classdef test_StrategySelection < matlab.unittest.TestCase
         SIGNAL_IQ_REF = 'iq_ref'
         SIGNAL_STRAT  = 'strategie'
 
-        BLK_Imax = 'Hackl_Pilsen_Algo/Maschinendaten/I_max'
-        BLK_nmax = 'Hackl_Pilsen_Algo/Maschinendaten/n_max'
+        VAR_Imax = 'I_max'
+        VAR_nmax = 'n_max'
 
         % Strategie-Codes gemäß Entscheidungsbaum
         STRAT_MTPC              = 1  % T* und MTPC
@@ -51,22 +52,39 @@ classdef test_StrategySelection < matlab.unittest.TestCase
             rehash
             % Initialisierungsskript ausführen, damit die Kennfelddaten
             % im Base Workspace verfügbar sind.
-            repoRoot = localGetRepoRoot();
-            initScriptFile = fullfile(repoRoot, [tc.INIT_SCRIPT '.m']);
+            rrepoRoot = localGetRepoRoot();
             modelFile = fullfile(repoRoot, [tc.MODEL '.slx']);
+            dataScriptFile = fullfile(repoRoot, [tc.INIT_SCRIPT_DATA '.m']);
+            limitsScriptFile = fullfile(repoRoot, [tc.INIT_SCRIPT_LIMITS '.m']);
 
             fprintf('DEBUG prepareModel repoRoot: %s\n', repoRoot);
             fprintf('DEBUG prepareModel modelFile: %s\n', modelFile);
-            fprintf('DEBUG prepareModel isfile(modelFile): %d\n', isfile(modelFile));
+            fprintf('DEBUG prepareModel dataScriptFile: %s\n', dataScriptFile);
+            fprintf('DEBUG prepareModel limitsScriptFile: %s\n', limitsScriptFile);
 
             tc.assertEqual(isfile(modelFile), true, ...
                 sprintf('Modell-Datei wurde nicht gefunden: %s', modelFile));
+
+            tc.assertEqual(isfile(dataScriptFile), true, ...
+                sprintf('Datenskript wurde nicht gefunden: %s', dataScriptFile));
+
+            tc.assertEqual(isfile(limitsScriptFile), true, ...
+                sprintf('Limits-Skript wurde nicht gefunden: %s', limitsScriptFile));
 
             tc.assertEqual(exist('load_system', 'file') == 2, true, ...
                 'Die Funktion "load_system" ist nicht verfügbar. Simulink fehlt vermutlich.');
 
             tc.assertEqual(license('test', 'Simulink'), 1, ...
                 'Es ist keine Simulink-Lizenz verfügbar.');
+
+            evalin('base', 'clear I_max n_max');
+
+            oldFolder = pwd;
+            cleanupObj = onCleanup(@() cd(oldFolder)); %#ok<NASGU>
+            cd(repoRoot);
+
+            run(tc.INIT_SCRIPT_DATA);
+            run(tc.INIT_SCRIPT_LIMITS);
 
             load_system(modelFile);
         end
@@ -79,14 +97,14 @@ classdef test_StrategySelection < matlab.unittest.TestCase
                     close_system(tc.MODEL, 0);
                 end
             end
+
+            evalin('base', 'clear I_max n_max');
         end
     end
-    
+
     methods (Static)
-        function val = readConstant(blockPath)
-            % Liest einen Konstantenwert aus dem Modell und wandelt ihn um.
-            raw = get_param(blockPath, 'Value');
-            val = str2double(raw);
+        function val = readWorkspaceVariable(varName)
+            val = evalin('base', varName);
         end
     end
 
@@ -108,14 +126,13 @@ classdef test_StrategySelection < matlab.unittest.TestCase
             tc.verifyEqual(out.strategie, tc.STRAT_FW_TORQUE_ELLIPSE, ...
                 ['Am Referenzpunkt für Field-Weakening / torque on voltage ellipse ' ...
                  'wurde nicht Strategie 2 gewählt.']);
-                 
+
             tc.verifyTrue(isfinite(out.id_ref) && isfinite(out.iq_ref), ...
                 'FW-/Voltage-Ellipse-Test: id_ref oder iq_ref ist nicht endlich.');
-                
+
             tc.verifyLessThanOrEqual(hypot(out.id_ref, out.iq_ref), out.I_max + tc.CURRENT_TOL, ...
                 'FW-/Voltage-Ellipse-Test: gewählter Arbeitspunkt verletzt I_max.');
         end
-
 
         function test_boundary_torque_tracking_reference_point(tc)
             out = localRunCase(tc, tc.N_BOUNDARY_TRACKING, tc.T_BOUNDARY_TRACKING);
@@ -126,8 +143,7 @@ classdef test_StrategySelection < matlab.unittest.TestCase
             tc.verifyTrue(isfinite(out.id_ref) && isfinite(out.iq_ref), ...
                 'Boundary-Tracking-Test: id_ref oder iq_ref ist nicht endlich.');
 
-            tc.verifyLessThanOrEqual( ...
-                hypot(out.id_ref, out.iq_ref), out.I_max + tc.CURRENT_TOL, ...
+            tc.verifyLessThanOrEqual(hypot(out.id_ref, out.iq_ref), out.I_max + tc.CURRENT_TOL, ...
                 'Boundary-Tracking-Test: gewählter Arbeitspunkt verletzt I_max.');
         end
 
@@ -140,15 +156,14 @@ classdef test_StrategySelection < matlab.unittest.TestCase
             tc.verifyTrue(isfinite(out.id_ref) && isfinite(out.iq_ref), ...
                 'i_feas-Sättigungs-Test: id_ref oder iq_ref ist nicht endlich.');
 
-            tc.verifyLessThanOrEqual( ...
-                hypot(out.id_ref, out.iq_ref), out.I_max + tc.CURRENT_TOL, ...
+            tc.verifyLessThanOrEqual(hypot(out.id_ref, out.iq_ref), out.I_max + tc.CURRENT_TOL, ...
                 'i_feas-Sättigungs-Test: gewählter Arbeitspunkt verletzt I_max.');
         end
 
         function test_speed_reference_below_n_max_for_reference_points(tc)
-            n_max = tc.readConstant(tc.BLK_nmax);
+            n_max = tc.readWorkspaceVariable(tc.VAR_nmax);
 
-            tc.verifyTrue(isfinite(n_max), ...
+            tc.verifyTrue(isnumeric(n_max) && isscalar(n_max) && isfinite(n_max), ...
                 'n_max konnte nicht numerisch gelesen werden.');
 
             tc.verifyLessThanOrEqual(tc.N_MTPC, n_max, ...
@@ -171,14 +186,13 @@ classdef test_StrategySelection < matlab.unittest.TestCase
 end
 
 function out = localRunCase(tc, n_mech_value, T_soll_value)
-    % Führt genau einen Testfall aus und liest die relevanten Ausgangswerte
     repoRoot = localGetRepoRoot();
     addpath(repoRoot);
 
-    % Initialisierung vor jedem einzelnen Testfall erneut ausführen
-    evalin('base', tc.INIT_SCRIPT);
+    evalin('base', tc.INIT_SCRIPT_DATA);
+    evalin('base', tc.INIT_SCRIPT_LIMITS);
 
-    I_max = tc.readConstant(tc.BLK_Imax);
+    I_max = evalin('base', tc.VAR_Imax);
 
     in = Simulink.SimulationInput(tc.MODEL);
     in = in.setVariable(tc.INPUT_SPEED_VAR, n_mech_value);
@@ -196,9 +210,7 @@ function out = localRunCase(tc, n_mech_value, T_soll_value)
     out.I_max = I_max;
 end
 
-
 function value = localExtractLastValue(simOut, sigName)
-    % Liest den letzten verfügbaren Wert eines Signals aus dem SimulationOutput
     data = [];
     value = [];
 
@@ -252,7 +264,6 @@ function value = localExtractLastValue(simOut, sigName)
 end
 
 function repoRoot = localGetRepoRoot()
-    % Bestimmt aus dem Speicherort dieser Testdatei den Repository-Root
     thisFile = mfilename('fullpath');
     testsDir = fileparts(thisFile);
     repoRoot = fileparts(testsDir);
