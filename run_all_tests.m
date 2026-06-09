@@ -45,7 +45,9 @@ disp(which('test_StrategySelection', '-all'));
 disp('--- DEBUG: repository files ---');
 disp(fullfile(repoRoot, 'Hackl_Pilsen_Algo.slx'));
 disp(fullfile(repoRoot, 'Messdaten_Interpoliert.m'));
+disp(fullfile(repoRoot, 'Maschinendaten_Vorgabe.m'));
 disp(fullfile(repoRoot, 'daten_nichtlinear_interpoliert.mat'));
+disp(fullfile(repoRoot, 'Maschinendaten.mat'));
 
 % Debug, ob alle nötigen Pfade existieren
 disp('--- DEBUG: result paths ---');
