@@ -40,6 +40,7 @@ jobs:
             initFile  = fullfile(repoRoot, 'Messdaten_Interpoliert.m');
             lutFile   = fullfile(repoRoot, 'LUT_BRUSA_jax_grad.mat');
             dataFile  = fullfile(repoRoot, 'daten_nichtlinear_interpoliert.mat');
+            dataFile1 = fullfile(repoRoot, 'Maschinendaten.mat');
             testsDir  = fullfile(repoRoot, 'tests');
 
             fprintf('MATLAB Version: %s\n', version)
@@ -50,6 +51,7 @@ jobs:
             fprintf('Init-Skript vorhanden (isfile): %d -> %s\n', isfile(initFile), initFile)
             fprintf('LUT vorhanden (isfile): %d -> %s\n', isfile(lutFile), lutFile)
             fprintf('Interpolierte Daten vorhanden (isfile): %d -> %s\n', isfile(dataFile), dataFile)
+            fprintf('Maschinendaten vorhanden (isfile): %d -> %s\n', isfile(dataFile1), dataFile1)
             fprintf('Tests-Ordner vorhanden (isfolder): %d -> %s\n', isfolder(testsDir), testsDir)
 
             disp('--- Inhalt des Repository-Root ---')
