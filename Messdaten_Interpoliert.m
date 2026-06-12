@@ -10,8 +10,12 @@
 %   - daten_nichtlinear_interpoliert.mat
 
 %% 1. LUT laden 
-load('LUT_BRUSA_jax_grad.mat'); % alle Werte anpassen auf double (statt int16)  
+% load('LUT_BRUSA_jax_grad.mat');
+scriptDir = fileparts(mfilename('fullpath'));
 
+load(fullfile(scriptDir, 'LUT_BRUSA_jax_grad.mat'));
+
+ % alle Werte anpassen auf double (statt int16)  
 id_vec = double(i_d_vec);       % id-Achse 
 iq_vec = double(i_q_vec);       % iq-Achse
 
@@ -83,5 +87,7 @@ p = 3;
 PSIQ = PSIQ1 - PSIQ1(iq0_idx,:);   % zieht die iq=0-Zeile spaltenweise auf 0
 
 % Exportieren der interpolierten Daten in 'daten_nichtlinear_interpoliert.mat'
-save('daten_nichtlinear_interpoliert.mat', 'PSID', 'PSIQ', 'Lm', 'Lm_fine2','Ld', 'Lq', 'id_fine', 'iq_fine', 'ID', 'IQ');
+% save('daten_nichtlinear_interpoliert.mat', 'PSID', 'PSIQ', 'Lm', 'Lm_fine2','Ld', 'Lq', 'id_fine', 'iq_fine', 'ID', 'IQ');
+save(fullfile(scriptDir, 'daten_nichtlinear_interpoliert.mat'), ...
+     'PSID', 'PSIQ', 'Lm', 'Lm_fine2', 'Ld', 'Lq', 'id_fine', 'iq_fine', 'ID', 'IQ');
 
