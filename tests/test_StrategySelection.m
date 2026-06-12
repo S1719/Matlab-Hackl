@@ -58,27 +58,11 @@ classdef test_StrategySelection < matlab.unittest.TestCase
             dataScriptFile = fullfile(repoRoot, [tc.INIT_SCRIPT_DATA '.m']);
             limitsScriptFile = fullfile(repoRoot, [tc.INIT_SCRIPT_LIMITS '.m']);
 
-            fprintf('DEBUG prepareModel repoRoot: %s\n', repoRoot);
-            fprintf('DEBUG prepareModel modelFile: %s\n', modelFile);
-            fprintf('DEBUG prepareModel dataScriptFile: %s\n', dataScriptFile);
-            fprintf('DEBUG prepareModel limitsScriptFile: %s\n', limitsScriptFile);
-
-            tc.assertEqual(isfile(modelFile), true, ...
-                sprintf('Modell-Datei wurde nicht gefunden: %s', modelFile));
-
-            tc.assertEqual(isfile(dataScriptFile), true, ...
-                sprintf('Datenskript wurde nicht gefunden: %s', dataScriptFile));
-
-            tc.assertEqual(isfile(limitsScriptFile), true, ...
-                sprintf('Limits-Skript wurde nicht gefunden: %s', limitsScriptFile));
-
-            tc.assertEqual(exist('load_system', 'file') == 2, true, ...
-                'Die Funktion "load_system" ist nicht verfügbar. Simulink fehlt vermutlich.');
-
-            tc.assertEqual(license('test', 'Simulink'), 1, ...
-                'Es ist keine Simulink-Lizenz verfügbar.');
-
-            evalin('base', 'clear I_max n_max');
+            tc.assertTrue(isfile(modelFile), sprintf('Modell-Datei wurde nicht gefunden: %s', modelFile));
+            tc.assertTrue(isfile(dataScriptFile), sprintf('Datenskript wurde nicht gefunden: %s', dataScriptFile));
+            tc.assertTrue(isfile(limitsScriptFile), sprintf('Limits-Skript wurde nicht gefunden: %s', limitsScriptFile));
+            tc.assertTrue(exist('load_system', 'file') == 2, 'load_system ist nicht verfügbar.');
+            tc.assertTrue(license('test', 'Simulink') == 1, 'Es ist keine Simulink-Lizenz verfügbar.');
 
             oldFolder = pwd;
             cleanupObj = onCleanup(@() cd(oldFolder)); %#ok<NASGU>
@@ -87,18 +71,18 @@ classdef test_StrategySelection < matlab.unittest.TestCase
             run(tc.INIT_SCRIPT_DATA);
             run(tc.INIT_SCRIPT_LIMITS);
 
+            tc.assertTrue(evalin('base', sprintf('exist(''%s'',''var'')', tc.VAR_Imax)) == 1, 'I_max fehlt im Base Workspace.');
+            tc.assertTrue(evalin('base', sprintf('exist(''%s'',''var'')', tc.VAR_nmax)) == 1, 'n_max fehlt im Base Workspace.');
+
             load_system(modelFile);
         end
     end
 
     methods (TestMethodTeardown)
         function closeModel(tc)
-            if exist('bdIsLoaded', 'file') == 2
-                if bdIsLoaded(tc.MODEL)
-                    close_system(tc.MODEL, 0);
-                end
+            if exist('bdIsLoaded', 'file') == 2 && bdIsLoaded(tc.MODEL)
+                close_system(tc.MODEL, 0);
             end
-
             evalin('base', 'clear I_max n_max');
         end
     end
@@ -112,8 +96,7 @@ classdef test_StrategySelection < matlab.unittest.TestCase
     methods (Test)
         function test_MTPC_reference_point(tc)
             out = localRunCase(tc, tc.N_MTPC, tc.T_MTPC);
-
-            tc.verifyEqual(out.strategie, tc.STRAT_MTPC, ...
+            tc.verifyEqual(double(out.strategie), double(tc.STRAT_MTPC), ...
                 'Am MTPC-Referenzpunkt wurde nicht Strategie 1 (MTPC) gewählt.');
             tc.verifyTrue(isfinite(out.id_ref) && isfinite(out.iq_ref), ...
                 'MTPC-Test: id_ref oder iq_ref ist nicht endlich.');
@@ -123,50 +106,38 @@ classdef test_StrategySelection < matlab.unittest.TestCase
 
         function test_field_weakening_torque_on_voltage_ellipse_reference_point(tc)
             out = localRunCase(tc, tc.N_FW_TORQUE_ELLIPSE, tc.T_FW_TORQUE_ELLIPSE);
-
-            tc.verifyEqual(out.strategie, tc.STRAT_FW_TORQUE_ELLIPSE, ...
-                ['Am Referenzpunkt für Field-Weakening / torque on voltage ellipse ' ...
-                 'wurde nicht Strategie 2 gewählt.']);
-
+            tc.verifyEqual(double(out.strategie), double(tc.STRAT_FW_TORQUE_ELLIPSE), ...
+                'Am Referenzpunkt für Field-Weakening / torque on voltage ellipse wurde nicht Strategie 2 gewählt.');
             tc.verifyTrue(isfinite(out.id_ref) && isfinite(out.iq_ref), ...
                 'FW-/Voltage-Ellipse-Test: id_ref oder iq_ref ist nicht endlich.');
-
             tc.verifyLessThanOrEqual(hypot(out.id_ref, out.iq_ref), out.I_max + tc.CURRENT_TOL, ...
                 'FW-/Voltage-Ellipse-Test: gewählter Arbeitspunkt verletzt I_max.');
         end
 
         function test_boundary_torque_tracking_reference_point(tc)
             out = localRunCase(tc, tc.N_BOUNDARY_TRACKING, tc.T_BOUNDARY_TRACKING);
-
-            tc.verifyEqual(out.strategie, tc.STRAT_BOUNDARY_TRACKING, ...
+            tc.verifyEqual(double(out.strategie), double(tc.STRAT_BOUNDARY_TRACKING), ...
                 'Am Referenzpunkt für Boundary torque tracking wurde nicht Strategie 3 gewählt.');
-
             tc.verifyTrue(isfinite(out.id_ref) && isfinite(out.iq_ref), ...
                 'Boundary-Tracking-Test: id_ref oder iq_ref ist nicht endlich.');
-
             tc.verifyLessThanOrEqual(hypot(out.id_ref, out.iq_ref), out.I_max + tc.CURRENT_TOL, ...
                 'Boundary-Tracking-Test: gewählter Arbeitspunkt verletzt I_max.');
         end
 
         function test_saturation_at_ifeas_reference_point(tc)
             out = localRunCase(tc, tc.N_SATURATION_IFEAS, tc.T_SATURATION_IFEAS);
-
-            tc.verifyEqual(out.strategie, tc.STRAT_SATURATION_IFEAS, ...
+            tc.verifyEqual(double(out.strategie), double(tc.STRAT_SATURATION_IFEAS), ...
                 'Am Referenzpunkt für Saturation at i_feas wurde nicht Strategie 4 gewählt.');
-
             tc.verifyTrue(isfinite(out.id_ref) && isfinite(out.iq_ref), ...
                 'i_feas-Sättigungs-Test: id_ref oder iq_ref ist nicht endlich.');
-
             tc.verifyLessThanOrEqual(hypot(out.id_ref, out.iq_ref), out.I_max + tc.CURRENT_TOL, ...
                 'i_feas-Sättigungs-Test: gewählter Arbeitspunkt verletzt I_max.');
         end
 
         function test_speed_reference_below_n_max_for_reference_points(tc)
             n_max = tc.readWorkspaceVariable(tc.VAR_nmax);
-
             tc.verifyTrue(isnumeric(n_max) && isscalar(n_max) && isfinite(n_max), ...
                 'n_max konnte nicht numerisch gelesen werden.');
-
             tc.verifyLessThanOrEqual(tc.N_MTPC, n_max, ...
                 'MTPC-Referenzpunkt verletzt n_max.');
             tc.verifyLessThanOrEqual(tc.N_FW_TORQUE_ELLIPSE, n_max, ...
@@ -179,8 +150,7 @@ classdef test_StrategySelection < matlab.unittest.TestCase
 
         function test_strategy_signal_is_integer_like(tc)
             out = localRunCase(tc, tc.N_MTPC, tc.T_MTPC);
-
-            tc.verifyEqual(out.strategie, round(out.strategie), ...
+            tc.verifyEqual(double(out.strategie), round(double(out.strategie)), ...
                 'Strategie-Ausgang ist nicht ganzzahlig codiert.');
         end
     end
@@ -188,9 +158,6 @@ end
 
 function out = localRunCase(tc, n_mech_value, T_soll_value)
     repoRoot = localGetRepoRoot();
-    addpath(repoRoot);
-
-    evalin('base', 'clear I_max n_max');
     oldFolder = pwd;
     cleanupObj = onCleanup(@() cd(oldFolder)); %#ok<NASGU>
     cd(repoRoot);
@@ -210,9 +177,9 @@ function out = localRunCase(tc, n_mech_value, T_soll_value)
 
     simOut = sim(in);
 
-    out.id_ref = localExtractLastValue(simOut, tc.SIGNAL_ID_REF);
-    out.iq_ref = localExtractLastValue(simOut, tc.SIGNAL_IQ_REF);
-    out.strategie = localExtractLastValue(simOut, tc.SIGNAL_STRAT);
+    out.id_ref = double(localExtractLastValue(simOut, tc.SIGNAL_ID_REF));
+    out.iq_ref = double(localExtractLastValue(simOut, tc.SIGNAL_IQ_REF));
+    out.strategie = double(localExtractLastValue(simOut, tc.SIGNAL_STRAT));
     out.I_max = I_max;
 end
 
