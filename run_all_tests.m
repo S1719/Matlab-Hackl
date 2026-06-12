@@ -8,6 +8,11 @@ function run_all_tests
     resultsDir = fullfile(repoRoot, 'test-results');
     xmlFile = fullfile(resultsDir, 'junit_results.xml');
 
+    % Aufruf des Skriptes, um Maschinendaten in Workspace zu laden
+    cd(repoRoot);
+    run('Maschinendaten_Vorgabe.m');
+    run('Messdaten_Interpoliert.m');
+
     % Relevante Pfade hinzufügen
     addpath(repoRoot);
     addpath(testsDir);
