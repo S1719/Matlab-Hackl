@@ -178,7 +178,11 @@ function current = localRunAllCases(tc, repoRoot, modelFile)
             c.signals.(sigName).data = y;
         end
 
-        current.cases(i) = c; %#ok<AGROW>
+        if isempty(current.cases)
+            current.cases = c;
+        else
+            current.cases(end + 1) = c; %#ok<AGROW>
+        end
     end
 end
 
