@@ -2,6 +2,8 @@
 % Hier werden die Maschinendaten geladen
 % Bei Verwendung eines anderen Motors bitte Kenndaten hier anpassen: 
 
+scriptDir = fileparts(mfilename('fullpath'));
+
 p = 3;                    % Polpaarzahl
 Rs = 0.018;               % Statorwiderstand [Ohm]
 I_max = 170;              % maximal zulässiger Strom [A]
