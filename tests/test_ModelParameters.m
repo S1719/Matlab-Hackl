@@ -22,9 +22,9 @@ classdef test_ModelParameters < matlab.unittest.TestCase
 
     methods (TestMethodSetup)
         function prepareModel(tc)
-            rehash
+            rehash   % Aktualisiert MATLAB Dateiliste
 
-            % Repository-Root bestimmen
+            % Repository-Root bestimmen, Pfade zu Modell und Skript aufbauen
             repoRoot = localGetRepoRoot();
             modelFile = fullfile(repoRoot, [tc.MODEL '.slx']);
             dataScriptFile1 = fullfile(repoRoot, tc.DATA_SCRIPT_1);
@@ -34,7 +34,7 @@ classdef test_ModelParameters < matlab.unittest.TestCase
             fprintf('DEBUG prepareModel dataScriptFile1: %s\n', dataScriptFile1);
             fprintf('DEBUG prepareModel dataScriptFile2: %s\n', dataScriptFile2);
 
-            % Vorbedingungen hart prüfen
+            % Vorbedingungen prüfen: Modelle und Skripte müssen existieren
             tc.assertEqual(isfile(modelFile), true, ...
                 sprintf('Modell-Datei wurde nicht gefunden: %s', modelFile));
 
@@ -47,7 +47,7 @@ classdef test_ModelParameters < matlab.unittest.TestCase
             tc.assertEqual(exist('load_system', 'file') == 2, true, ...
                 'Die Funktion "load_system" ist nicht verfügbar. Simulink fehlt vermutlich.');
 
-            tc.assertEqual(license('test', 'Simulink'), 1, ...
+            tc.assertEqual(license('test', 'Simulink'), 1, ...        % Simulink-Lizenz muss verfügbar sein
                 'Es ist keine Simulink-Lizenz verfügbar.');
 
             % Initialisierungsskripte im Repository-Root ausführen
@@ -63,7 +63,7 @@ classdef test_ModelParameters < matlab.unittest.TestCase
         end
     end
 
-   methods (TestMethodTeardown)
+   methods (TestMethodTeardown)        % Prüfen, ob Modell geladen werden kann, anschließend Schließen ohne Speichern
         function closeModel(tc)
             if exist('bdIsLoaded', 'file') == 2
                 if bdIsLoaded(tc.MODEL)
@@ -79,7 +79,9 @@ classdef test_ModelParameters < matlab.unittest.TestCase
         end
     end
 
-    methods (Test)
+    % Haupt-Tests
+    methods (Test) 
+        % Prüfen, ob notwendige Variablen im Base Workspace existieren
         function test_required_parameters_exist(tc)
             tc.verifyEqual(evalin('base', sprintf('exist(''%s'',''var'')', tc.VAR_Rs)), 1, ...
                 'Variable Rs fehlt im Base Workspace.');
@@ -100,6 +102,7 @@ classdef test_ModelParameters < matlab.unittest.TestCase
                 'Variable n_max fehlt im Base Workspace.');
         end
 
+        % Prüfen, ob notwendige Variablen sinnvolle Werte haben (numerisch, skalar, endlich)
         function test_parameter_values_are_valid(tc)
             Rs    = tc.readWorkspaceVariable(tc.VAR_Rs);
             I_max = tc.readWorkspaceVariable(tc.VAR_Imax);
@@ -137,6 +140,7 @@ classdef test_ModelParameters < matlab.unittest.TestCase
     end
 end
 
+% Hilfsfunktion: Bestimmt Pfad zum Repository-Root aus Pfad der Testdatei
 function repoRoot = localGetRepoRoot()
     thisFile = mfilename('fullpath');
     testsDir = fileparts(thisFile);
