@@ -1,6 +1,6 @@
 classdef test_StrategySelection < matlab.unittest.TestCase
     % test_StrategySelection
-    % Prüft die Strategiewahl und den gewählten Arbeitspunkt an typischen
+    % Prüft die Strategiewahl und den gewählten Arbeitspunkt (id*, iq*) an typischen
     % Referenzpunkten.
 
     % Strategie-Codes:
@@ -44,11 +44,12 @@ classdef test_StrategySelection < matlab.unittest.TestCase
         N_SATURATION_IFEAS = 11000 % Erwartet id* = -159.305873 A
         T_SATURATION_IFEAS = 120   %          iq* =   59.341652 A
 
-        CURRENT_TOL = 1e-6
+        CURRENT_TOL = 1e-6         % Toleranz: 1 µA
     end
 
     
     methods (TestMethodSetup)
+        % Prüfen, ob notwendige Datein, Skripte und Modelle verfügbar sind
         function prepareModel(tc)
             rehash
             % Initialisierungsskript ausführen, damit die Kennfelddaten
@@ -94,6 +95,7 @@ classdef test_StrategySelection < matlab.unittest.TestCase
     end
 
     methods (Test)
+        % Prüfen, ob am Prüfpunkt 1/MTPC Stratgie 1, id*, iq* endlich und |I|<I_max
         function test_MTPC_reference_point(tc)
             out = localRunCase(tc, tc.N_MTPC, tc.T_MTPC);
             tc.verifyEqual(double(out.strategie), double(tc.STRAT_MTPC), ...
@@ -104,6 +106,7 @@ classdef test_StrategySelection < matlab.unittest.TestCase
                 'MTPC-Test: gewählter Arbeitspunkt verletzt I_max.');
         end
 
+        % Prüfen, ob am Prüfpunkt 2/FW Stratgie 2, id*, iq* endlich und |I|<I_max
         function test_field_weakening_torque_on_voltage_ellipse_reference_point(tc)
             out = localRunCase(tc, tc.N_FW_TORQUE_ELLIPSE, tc.T_FW_TORQUE_ELLIPSE);
             tc.verifyEqual(double(out.strategie), double(tc.STRAT_FW_TORQUE_ELLIPSE), ...
@@ -114,6 +117,7 @@ classdef test_StrategySelection < matlab.unittest.TestCase
                 'FW-/Voltage-Ellipse-Test: gewählter Arbeitspunkt verletzt I_max.');
         end
 
+        % Prüfen, ob am Prüfpunkt 3/BTT Stratgie 3, id*, iq* endlich und |I|<I_max
         function test_boundary_torque_tracking_reference_point(tc)
             out = localRunCase(tc, tc.N_BOUNDARY_TRACKING, tc.T_BOUNDARY_TRACKING);
             tc.verifyEqual(double(out.strategie), double(tc.STRAT_BOUNDARY_TRACKING), ...
@@ -124,6 +128,7 @@ classdef test_StrategySelection < matlab.unittest.TestCase
                 'Boundary-Tracking-Test: gewählter Arbeitspunkt verletzt I_max.');
         end
 
+        % Prüfen, ob am Prüfpunkt 4/Sättigung Stratgie 4, id*, iq* endlich und |I|<I_max
         function test_saturation_at_ifeas_reference_point(tc)
             out = localRunCase(tc, tc.N_SATURATION_IFEAS, tc.T_SATURATION_IFEAS);
             tc.verifyEqual(double(out.strategie), double(tc.STRAT_SATURATION_IFEAS), ...
@@ -134,6 +139,7 @@ classdef test_StrategySelection < matlab.unittest.TestCase
                 'i_feas-Sättigungs-Test: gewählter Arbeitspunkt verletzt I_max.');
         end
 
+        % Prüfen, ob Prüfpunkt Maximaldrehzahl n_max überschreitet
         function test_speed_reference_below_n_max_for_reference_points(tc)
             n_max = tc.readWorkspaceVariable(tc.VAR_nmax);
             tc.verifyTrue(isnumeric(n_max) && isscalar(n_max) && isfinite(n_max), ...
