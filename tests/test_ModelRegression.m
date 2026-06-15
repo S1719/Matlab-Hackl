@@ -1,8 +1,10 @@
 classdef test_ModelRegression < matlab.unittest.TestCase
     % test_ModelRegression
     % Regressionstest für das Simulink-Modell Hackl_Pilsen_Algo.
-    % Vergleicht id_ref, iq_ref und strategie gegen eine gespeicherte
-    % Baseline-MAT-Datei.
+    % Vergleicht id_ref, iq_ref und strategie gegen eine gespeicherte Baseline-MAT-Datei.
+    % Hier wird geprüft, ob sich das Modellverhalten ungewollt verändert.
+    %
+    % Wenn eine Änderung erwünscht ist: Baseline bewusst neu erzeugen/ aktualisieren
 
     properties (Constant)
         MODEL = 'Hackl_Pilsen_Algo'
@@ -16,8 +18,8 @@ classdef test_ModelRegression < matlab.unittest.TestCase
         INPUT_TORQUE_VAR = 'T_soll'
 
         % Feste Regressionstestpunkte
-        N_TEST = [2000, 7000, 10000]
-        T_TEST = [50, 80, 100]
+        N_TEST = [2000, 7000, 10000]  % Drehzahl
+        T_TEST = [50, 80, 100]        % Drehmoment
 
         ABS_TOL_IDIQ = 1e-6
         REL_TOL_IDIQ = 1e-4
@@ -26,6 +28,7 @@ classdef test_ModelRegression < matlab.unittest.TestCase
     end
 
     methods (Test)
+        % Funktionanler Test: Sind Modelle und Skripte vorhanden, ist eine Lizenz verfügbar?
         function test_regression_against_baseline(tc)
             repoRoot = localGetRepoRoot();
             modelFile = fullfile(repoRoot, [tc.MODEL '.slx']);
