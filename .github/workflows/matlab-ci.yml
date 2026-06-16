@@ -11,7 +11,7 @@ on:		# Trigger workflow bei push und pull request -> für "main" und "master" br
   workflow_dispatch:
 
 jobs:
-  test: MATLAB and Simulink Tests
+  test: 
     runs-on: self-hosted
 
     steps:
