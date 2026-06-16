@@ -11,14 +11,17 @@ on:		# Trigger workflow bei push und pull request -> für "main" und "master" br
   workflow_dispatch:
 
 jobs:
-  test:
-    name: MATLAB and Simulink Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
+  test: MATLAB and Simulink Tests
+    runs-on: self-hosted
 
     steps:
       - name: Repository auschecken             # Repository prüfen
         uses: actions/checkout@v4
+        
+      - name: Run MATLAB Tests                  # Selfhosted Runner Arthur
+        shell: cmd
+        run: |
+          "C:\Program Files\MATLAB\R2023b\bin\matlab.exe" -batch "addpath(genpath(getenv('GITHUB_WORKSPACE'))); results = runtests('Testcases'); disp(results); assertSuccess(results);"
 
       - name: MATLAB mit Simulink einrichten
         uses: matlab-actions/setup-matlab@v2
