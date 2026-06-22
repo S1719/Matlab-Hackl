@@ -1,17 +1,18 @@
-# Matlab-Hackl
+# Matlab Hackl-Glac
 
-Unit-Tests und CI für das Simulink-Modell zur arbeitspunktabhängigen Stromsollwertvorgabe einer Synchronmaschine.
+Simulink-Modell zur arbeitspunktabhängigen Stromsollwertvorgabe einer Synchronmaschine (PMSM).
 
-Dieses Repository enthält automatische MATLAB-/Simulink-Tests für ein Simulink-Modell, in dem die analytischen Kennlinien und Schnittpunkte für die optimalen Betriebsstrategien auf Basis der Arbeiten von Christoph M. Hackl bzw. des zugehörigen OFTC-Ansatzes berechnet werden und die Auswahl des tatsächlich zu verwendenden Betriebspunkts gemäß dem Auswahlalgorithmus nach Antonín Glac, Václav Šmídl und Zdeněk Peroutka erfolgt.
+In diesem Repository befindet sich ein Simulink-Modell, welches nach Vorgabe des Wunschdrehmoment `T*` und der Wunschdrehzahl `n*` die erforderlichen Ströme `id*` und `id*` für den Arbeitspunkt berechnet.
+Die analytischen Kennlinien MTPC, MTPV, MTPF sowie die Strom- und Spannungsgrenze des Motormodells werden auf Basis der Arbeiten von Christoph M. Hackl bzw. des zugehörigen OFTC-Ansatzes berechnet.
+Die Auswahl des tatsächlich zu verwendenden Betriebspunktes erfolgt gemäß des Auswahlalgorithmus nach Antonín Glac, Václav Šmídl und Zdeněk Peroutka.
 
-Dabei werden insbesondere Strategien und Randkurven wie:
+Verwendete Kennlinien bzw Erklärung der Abkürzungen:
 - MTPC (Maximum Torque per Current),
 - MTPV (Maximum Torque per Voltage),
 - MTPF (Maximum Torque per Flux),
 - MC (Maximum Current) bzw. Stromgrenze,
 - Voltage Ellipse bzw. Spannungsgrenze
-
-verwendet, um für gegebene Sollwerte \(T^\*\) und \(n^\*\) einen physikalisch zulässigen und regelungstechnisch geeigneten Stromsollwertvektor \((i_d^\*, i_q^\*)\) zu bestimmen.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ## Fachlicher Hintergrund
 
