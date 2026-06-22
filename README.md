@@ -36,7 +36,7 @@ Die Tests decken aktuell vier Bereiche ab:
 - **LUT-Konsistenz:** Prüft Größen, Monotonie, `meshgrid`-Orientierung sowie `NaN`/`Inf` in den Kennfeldern.
 - **Modellparameter:** Prüft, ob Parameter wie `p`, `Rs`, `I_max`, `U_dc` sowie optional `U_max` und `n_max` vorhanden und gültig sind.
 - **Strategiewahl:** Prüft an festen Referenzpunkten, ob der vom Modell gewählte Betriebspunkt zur erwarteten Strategie bzw. zum erwarteten Betriebsbereich passt.
-- **Regressionstest:** Vergleicht `id_ref`, `iq_ref` und `strategie` mit einer gespeicherten Baseline-MAT-Datei, um unbeabsichtigte Änderungen im Modellverhalten zu erkennen. Baseline-Tests vergleichen aktuelle Simulationsergebnisse mit zuvor freigegebenen Referenzdaten. [web:53][web:101]
+- **Regressionstest:** Vergleicht `id_ref`, `iq_ref` und `strategie` mit einer gespeicherten Baseline-MAT-Datei, um unbeabsichtigte Änderungen im Modellverhalten zu erkennen. Baseline-Tests vergleichen aktuelle Simulationsergebnisse mit zuvor freigegebenen Referenzdaten. 
 
 ## Modellidee
 
@@ -45,11 +45,11 @@ Das Simulink-Modell berechnet für gegebene Vorgaben wie Drehzahl und Drehmoment
 - MTPV und Spannungsellipse,
 - MTPC und Spannungsellipse,
 - Stromgrenze und Spannungsellipse,
-- sowie Grenzkurven mit der Drehmomenthyperbel. [file:134]
+- sowie Grenzkurven mit der Drehmomenthyperbel. 
 
 Aus diesen Kandidaten wird anschließend gemäß dem Entscheidungsbaum ein zulässiger und geeigneter Sollstromvektor ausgewählt. Der Algorithmus unterscheidet also zwischen:
 - der **analytischen Berechnung** von Kennlinien und Schnittpunkten,
-- und der **logischen Auswahl** des finalen Betriebspunkts. [web:135][file:134]
+- und der **logischen Auswahl** des finalen Betriebspunkts. 
 
 Diese Trennung ist wichtig, weil eine korrekte Berechnung einzelner Kennlinien allein noch nicht garantiert, dass im Betrieb auch der richtige Kandidat ausgewählt wird. Genau deshalb existieren neben Konsistenz- und Parametertests auch separate Strategietests.
 
@@ -63,7 +63,7 @@ Für lokale Testläufe werden benötigt:
 - Das Initialisierungsskript `Messdaten_Interpoliert.m`
 - Die Testdateien im Ordner `tests/`
 
-Für GitHub CI wird zusätzlich ein GitHub-Repository mit aktivierten GitHub Actions benötigt. MATLAB- und Simulink-Tests lassen sich über die offiziellen MATLAB Actions in GitHub Actions ausführen. [web:107]
+Für GitHub CI wird zusätzlich ein GitHub-Repository mit aktivierten GitHub Actions benötigt. MATLAB- und Simulink-Tests lassen sich über die offiziellen MATLAB Actions in GitHub Actions ausführen. 
 
 ## Baseline einmal erzeugen
 
@@ -124,7 +124,7 @@ Ein kompletter lokaler Testlauf erfolgt mit:
 run('tests/run_all_tests.m');
 ```
 
-Das Skript führt alle Testdateien im Ordner `tests/` aus. Wenn ein Test fehlschlägt, beendet sich der Lauf mit einer Fehlermeldung. MATLAB-Tests können lokal und automatisiert als Suite ausgeführt werden. [web:130][web:125]
+Das Skript führt alle Testdateien im Ordner `tests/` aus. Wenn ein Test fehlschlägt, beendet sich der Lauf mit einer Fehlermeldung. MATLAB-Tests können lokal und automatisiert als Suite ausgeführt werden. 
 
 ## Bedeutung der wichtigsten Testdateien
 
