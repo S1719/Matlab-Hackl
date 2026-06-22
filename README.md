@@ -15,9 +15,9 @@ verwendet, um für gegebene Sollwerte \(T^\*\) und \(n^\*\) einen physikalisch z
 
 ## Fachlicher Hintergrund
 
-Die mathematischen Gleichungen zur Berechnung der charakteristischen Kurven und ihrer Schnittpunkte basieren auf dem analytischen OFTC-Ansatz nach Hackl bzw. den zugehörigen Veröffentlichungen zur optimalen Feedforward-Drehmomentregelung synchroner Maschinen. In diesem Ansatz werden die relevanten Optimierungsprobleme und Nebenbedingungen analytisch beschrieben, sodass Referenzströme für typische Betriebsstrategien wie MTPC, MTPV und MTPF bestimmt werden können. [web:135][web:137]
+Die mathematischen Gleichungen zur Berechnung der charakteristischen Kurven und ihrer Schnittpunkte basieren auf dem analytischen OFTC-Ansatz nach Hackl bzw. den zugehörigen Veröffentlichungen zur optimalen Feedforward-Drehmomentregelung synchroner Maschinen. In diesem Ansatz werden die relevanten Optimierungsprobleme und Nebenbedingungen analytisch beschrieben, sodass Referenzströme für typische Betriebsstrategien wie MTPC, MTPV und MTPF bestimmt werden können. 
 
-Die eigentliche Auswahl, welcher der berechneten Kandidatenpunkte im aktuellen Betrieb verwendet wird, orientiert sich in diesem Repository am Entscheidungsablauf nach Antonín Glac, Václav Šmídl und Zdeněk Peroutka, "Optimal Feedforward Torque Control of Synchronous Machines with Time-varying Parameters", IECON 2018. [web:136]
+Die eigentliche Auswahl, welcher der berechneten Kandidatenpunkte im aktuellen Betrieb verwendet wird, orientiert sich in diesem Repository am Entscheidungsablauf nach Antonín Glac, Václav Šmídl und Zdeněk Peroutka, "Optimal Feedforward Torque Control of Synchronous Machines with Time-varying Parameters", IECON 2018. 
 
 Der im Modell verwendete Auswahlalgorithmus folgt dabei sinngemäß diesem Ablauf:
 1. Berechnung der relevanten Kurven und Schnittpunkte.
@@ -25,9 +25,9 @@ Der im Modell verwendete Auswahlalgorithmus folgt dabei sinngemäß diesem Ablau
 3. Berechnung von Kandidatenpunkten an den Schnittstellen von MTPC, MTPV, Stromkreis, Spannungsellipse und Drehmomenthyperbel.
 4. Ermittlung eines zulässigen Zwischenkandidaten \(i_{feas}\).
 5. Vergleich des angeforderten Moments mit den an den Grenzpunkten erreichbaren Momenten.
-6. Auswahl des finalen Arbeitspunkts als einer der zulässigen Kandidaten, z. B. \(i_{feas}\), \(i_{tv}\) oder \(i_{at}\), abhängig von Spannungs-, Strom- und Momentgrenzen. [file:134]
+6. Auswahl des finalen Arbeitspunkts als einer der zulässigen Kandidaten, z. B. \(i_{feas}\), \(i_{tv}\) oder \(i_{at}\), abhängig von Spannungs-, Strom- und Momentgrenzen. 
 
-Damit prüft dieses Repository nicht nur einfache Kennfeldgrößen, sondern die Konsistenz einer analytisch begründeten Arbeitspunktwahl im gesamten zulässigen Betriebsbereich. [web:135][file:134]
+Damit prüft dieses Repository nicht nur einfache Kennfeldgrößen, sondern die Konsistenz einer analytisch begründeten Arbeitspunktwahl im gesamten zulässigen Betriebsbereich. 
 
 ## Inhalt der Tests
 
