@@ -203,4 +203,5 @@ Modelländerung, Kennfelder, Parameter, Schnittpunktberechnung oder Auswahlalgor
 ## Quellenhinweis
 
 Mathematischen Herleitungen der Kurven MTPC, MTPV, MTPF (Eldeeb, Hackl):  https://www.researchgate.net/publication/309738085_On_the_optimal_feedforward_torque_control_problem_of_anisotropic_synchronous_machines_Quadrics_quartics_and_analytical_solutions
+
 Auswahlablauf des finalen Betriebspunkts (Glac, Šmídl, Peroutka): https://www.researchgate.net/publication/330487741_Optimal_Feedforward_Torque_Control_of_Synchronous_Machines_with_Time-Varying_Parameters 
