@@ -21,12 +21,12 @@ jobs:
       - name: Repository auschecken
         uses: actions/checkout@v4
 
-      - name: Diagnose ausführen
+      - name: MATLAB / Simulink Diagnose
         shell: cmd
         run: |
-          "C:\Program Files\MATLAB\R2023b\bin\matlab.exe" -batch "cd(getenv('GITHUB_WORKSPACE')); ci_diagnose"
-      
-     - name: Tests ausführen
-       shell: cmd
-       run: |
-           "C:\Program Files\MATLAB\R2023b\bin\matlab.exe" -batch "cd(getenv('GITHUB_WORKSPACE')); addpath(genpath(pwd)); run_all_tests"
+          "C:\Program Files\MATLAB\R2023b\bin\matlab.exe" -batch "cd(getenv('GITHUB_WORKSPACE')); run('ci_diagnose.m')"
+
+      - name: Tests ausführen
+        shell: cmd
+        run: |
+          "C:\Program Files\MATLAB\R2023b\bin\matlab.exe" -batch "cd(getenv('GITHUB_WORKSPACE')); addpath(genpath(pwd)); run_all_tests"
