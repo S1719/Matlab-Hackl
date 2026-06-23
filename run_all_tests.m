@@ -43,7 +43,6 @@ disp('--- DEBUG: resolved files ---');
 disp(which('run_all_tests', '-all'));
 disp(which('test_LUT_Consistency', '-all'));
 disp(which('test_ModelParameters', '-all'));
-disp(which('test_ModelRegression', '-all'));
 disp(which('test_StrategySelection', '-all'));
 
 % Debug-Ausgabe, ob alle nötigen Files im Repository liegen
