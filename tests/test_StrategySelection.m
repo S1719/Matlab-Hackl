@@ -1,13 +1,7 @@
 classdef test_StrategySelection < matlab.unittest.TestCase
     % test_StrategySelection
-    % Prüft die Strategiewahl und den gewählten Arbeitspunkt (id*, iq*) an typischen
-    % Referenzpunkten.
-
-    % Strategie-Codes:
-    %   1 = MTPC
-    %   2 = Field-Weakening / torque on voltage ellipse
-    %   3 = Boundary torque tracking
-    %   4 = Saturation at i_feas
+    % Prüft die vier binären Fälle und den gewählten Arbeitspunkt (id*, iq*)
+    % an typischen Referenzpunkten.
 
     properties (Constant)
         MODEL = 'Hackl_Pilsen_Algo'
@@ -19,41 +13,42 @@ classdef test_StrategySelection < matlab.unittest.TestCase
 
         SIGNAL_ID_REF = 'id_ref'
         SIGNAL_IQ_REF = 'iq_ref'
-        SIGNAL_STRAT  = 'strategy'
+
+        SIGNAL_OUT_IAT = 'out_iat'
+        SIGNAL_OUT_ITV = 'out_itv'
+        SIGNAL_OUT_IAC = 'out_iac'
+        SIGNAL_OUT_ICV = 'out_icv'
 
         VAR_Imax = 'I_max'
         VAR_nmax = 'n_max'
 
-        % Strategie-Codes gemäß Entscheidungsbaum
-        STRAT_MTPC              = 1  % T* und MTPC
-        STRAT_FW_TORQUE_ELLIPSE = 2  % T* und Spannungsgrenze
-        STRAT_BOUNDARY_TRACKING = 3  % Grenzverfolgung entlang einer Begrenzung, bevor harte Sättigung eintritt
-        STRAT_SATURATION_IFEAS  = 4  % gewünschter Betriebspunkt nicht mehr erreichbar, 
-                                     % daher Sättigung auf zulässigen Grenzpunkt 
-                                     % (Spannungsgrenze und Stromgrenze)
+        CASE_IAT = 1    % T* auf MTPC
+        CASE_ITV = 2    % T* auf Spannungsgrenze
+        CASE_IAC = 3    % MTPC und Imax, T* nicht erreichbar
+        CASE_ICV = 4    % Imax und Umax, T* nicht erreichbar
 
-        N_MTPC = 2000    % MTPC: Erwartet id* = -61.0106 A, 
-        T_MTPC = 50      %                iq* =  52.7107 A
+        % T* auf MTPC
+        N_IAT = 5000
+        T_IAT = 50
 
-        N_FW_TORQUE_ELLIPSE = 7000 % XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-        T_FW_TORQUE_ELLIPSE = 80
+        % T* auf Umax
+        N_ITV = 10000
+        T_ITV = 70
 
-        N_BOUNDARY_TRACKING = 9000 % Erwartet id* = -110.576172 A
-        T_BOUNDARY_TRACKING = 90   %          iq* =   74.091035 A
+        % MTPC auf Imax, T* nicht erreichbar
+        N_IAC = 1000
+        T_IAC = 120
 
-        N_SATURATION_IFEAS = 11000 % Erwartet id* = -159.305873 A
-        T_SATURATION_IFEAS = 120   %          iq* =   59.341652 A
+        % Schnittpunkt Imax und Umax, T* nicht erreichbar
+        N_ICV = 11000    % n_max
+        T_ICV = 120
 
-        CURRENT_TOL = 1e-6         % Toleranz: 1 µA
+        CURRENT_TOL = 1e-6
     end
 
-    
     methods (TestMethodSetup)
-        % Prüfen, ob notwendige Datein, Skripte und Modelle verfügbar sind
         function prepareModel(tc)
             rehash
-            % Initialisierungsskript ausführen, damit die Kennfelddaten
-            % im Base Workspace verfügbar sind.
             repoRoot = localGetRepoRoot();
             modelFile = fullfile(repoRoot, [tc.MODEL '.slx']);
             dataScriptFile = fullfile(repoRoot, [tc.INIT_SCRIPT_DATA '.m']);
@@ -95,69 +90,69 @@ classdef test_StrategySelection < matlab.unittest.TestCase
     end
 
     methods (Test)
-        % Prüfen, ob am Prüfpunkt 1/MTPC Stratgie 1, id*, iq* endlich und |I|<I_max
-        function test_MTPC_reference_point(tc)
-            out = localRunCase(tc, tc.N_MTPC, tc.T_MTPC);
-            tc.verifyEqual(double(out.strategie), double(tc.STRAT_MTPC), ...
-                'Am MTPC-Referenzpunkt wurde nicht Strategie 1 (MTPC) gewählt.');
+        function test_iat_reference_point(tc)
+            out = localRunCase(tc, tc.N_IAT, tc.T_IAT);
+            tc.verifyEqual(out.out_iat, 1, 'Am MTPC-Referenzpunkt wurde nicht Fall iat gewählt.');
+            tc.verifyEqual(out.out_itv, 0);
+            tc.verifyEqual(out.out_iac, 0);
+            tc.verifyEqual(out.out_icv, 0);
             tc.verifyTrue(isfinite(out.id_ref) && isfinite(out.iq_ref), ...
-                'MTPC-Test: id_ref oder iq_ref ist nicht endlich.');
+                'iat-Test: id_ref oder iq_ref ist nicht endlich.');
             tc.verifyLessThanOrEqual(hypot(out.id_ref, out.iq_ref), out.I_max + tc.CURRENT_TOL, ...
-                'MTPC-Test: gewählter Arbeitspunkt verletzt I_max.');
+                'iat-Test: gewählter Arbeitspunkt verletzt I_max.');
         end
 
-        % Prüfen, ob am Prüfpunkt 2/FW Stratgie 2, id*, iq* endlich und |I|<I_max
-        function test_field_weakening_torque_on_voltage_ellipse_reference_point(tc)
-            out = localRunCase(tc, tc.N_FW_TORQUE_ELLIPSE, tc.T_FW_TORQUE_ELLIPSE);
-            tc.verifyEqual(double(out.strategie), double(tc.STRAT_FW_TORQUE_ELLIPSE), ...
-                'Am Referenzpunkt für Field-Weakening / torque on voltage ellipse wurde nicht Strategie 2 gewählt.');
+        function test_itv_reference_point(tc)
+            out = localRunCase(tc, tc.N_ITV, tc.T_ITV);
+            tc.verifyEqual(out.out_iat, 0);
+            tc.verifyEqual(out.out_itv, 1, 'Am Referenzpunkt wurde nicht Fall itv gewählt.');
+            tc.verifyEqual(out.out_iac, 0);
+            tc.verifyEqual(out.out_icv, 0);
             tc.verifyTrue(isfinite(out.id_ref) && isfinite(out.iq_ref), ...
-                'FW-/Voltage-Ellipse-Test: id_ref oder iq_ref ist nicht endlich.');
+                'itv-Test: id_ref oder iq_ref ist nicht endlich.');
             tc.verifyLessThanOrEqual(hypot(out.id_ref, out.iq_ref), out.I_max + tc.CURRENT_TOL, ...
-                'FW-/Voltage-Ellipse-Test: gewählter Arbeitspunkt verletzt I_max.');
+                'itv-Test: gewählter Arbeitspunkt verletzt I_max.');
         end
 
-        % Prüfen, ob am Prüfpunkt 3/BTT Stratgie 3, id*, iq* endlich und |I|<I_max
-        function test_boundary_torque_tracking_reference_point(tc)
-            out = localRunCase(tc, tc.N_BOUNDARY_TRACKING, tc.T_BOUNDARY_TRACKING);
-            tc.verifyEqual(double(out.strategie), double(tc.STRAT_BOUNDARY_TRACKING), ...
-                'Am Referenzpunkt für Boundary torque tracking wurde nicht Strategie 3 gewählt.');
+        function test_iac_reference_point(tc)
+            out = localRunCase(tc, tc.N_IAC, tc.T_IAC);
+            tc.verifyEqual(out.out_iat, 0);
+            tc.verifyEqual(out.out_itv, 0);
+            tc.verifyEqual(out.out_iac, 1, 'Am Referenzpunkt wurde nicht Fall iac gewählt.');
+            tc.verifyEqual(out.out_icv, 0);
             tc.verifyTrue(isfinite(out.id_ref) && isfinite(out.iq_ref), ...
-                'Boundary-Tracking-Test: id_ref oder iq_ref ist nicht endlich.');
+                'iac-Test: id_ref oder iq_ref ist nicht endlich.');
             tc.verifyLessThanOrEqual(hypot(out.id_ref, out.iq_ref), out.I_max + tc.CURRENT_TOL, ...
-                'Boundary-Tracking-Test: gewählter Arbeitspunkt verletzt I_max.');
+                'iac-Test: gewählter Arbeitspunkt verletzt I_max.');
         end
 
-        % Prüfen, ob am Prüfpunkt 4/Sättigung Stratgie 4, id*, iq* endlich und |I|<I_max
-        function test_saturation_at_ifeas_reference_point(tc)
-            out = localRunCase(tc, tc.N_SATURATION_IFEAS, tc.T_SATURATION_IFEAS);
-            tc.verifyEqual(double(out.strategie), double(tc.STRAT_SATURATION_IFEAS), ...
-                'Am Referenzpunkt für Saturation at i_feas wurde nicht Strategie 4 gewählt.');
+        function test_icv_reference_point(tc)
+            out = localRunCase(tc, tc.N_ICV, tc.T_ICV);
+            tc.verifyEqual(out.out_iat, 0);
+            tc.verifyEqual(out.out_itv, 0);
+            tc.verifyEqual(out.out_iac, 0);
+            tc.verifyEqual(out.out_icv, 1, 'Am Referenzpunkt wurde nicht Fall icv gewählt.');
             tc.verifyTrue(isfinite(out.id_ref) && isfinite(out.iq_ref), ...
-                'i_feas-Sättigungs-Test: id_ref oder iq_ref ist nicht endlich.');
+                'icv-Test: id_ref oder iq_ref ist nicht endlich.');
             tc.verifyLessThanOrEqual(hypot(out.id_ref, out.iq_ref), out.I_max + tc.CURRENT_TOL, ...
-                'i_feas-Sättigungs-Test: gewählter Arbeitspunkt verletzt I_max.');
+                'icv-Test: gewählter Arbeitspunkt verletzt I_max.');
         end
 
-        % Prüfen, ob Prüfpunkt Maximaldrehzahl n_max überschreitet
         function test_speed_reference_below_n_max_for_reference_points(tc)
             n_max = tc.readWorkspaceVariable(tc.VAR_nmax);
             tc.verifyTrue(isnumeric(n_max) && isscalar(n_max) && isfinite(n_max), ...
                 'n_max konnte nicht numerisch gelesen werden.');
-            tc.verifyLessThanOrEqual(tc.N_MTPC, n_max, ...
-                'MTPC-Referenzpunkt verletzt n_max.');
-            tc.verifyLessThanOrEqual(tc.N_FW_TORQUE_ELLIPSE, n_max, ...
-                'FW-/Voltage-Ellipse-Referenzpunkt verletzt n_max.');
-            tc.verifyLessThanOrEqual(tc.N_BOUNDARY_TRACKING, n_max, ...
-                'Boundary-Tracking-Referenzpunkt verletzt n_max.');
-            tc.verifyLessThanOrEqual(tc.N_SATURATION_IFEAS, n_max, ...
-                'i_feas-Sättigungs-Referenzpunkt verletzt n_max.');
+            tc.verifyLessThanOrEqual(tc.N_IAT, n_max);
+            tc.verifyLessThanOrEqual(tc.N_ITV, n_max);
+            tc.verifyLessThanOrEqual(tc.N_IAC, n_max);
+            tc.verifyLessThanOrEqual(tc.N_ICV, n_max);
         end
 
-        function test_strategy_signal_is_integer_like(tc)
-            out = localRunCase(tc, tc.N_MTPC, tc.T_MTPC);
-            tc.verifyEqual(double(out.strategie), round(double(out.strategie)), ...
-                'Strategie-Ausgang ist nicht ganzzahlig codiert.');
+        function test_exactly_one_case_active(tc)
+            out = localRunCase(tc, tc.N_IAT, tc.T_IAT);
+            vals = [out.out_iat, out.out_itv, out.out_iac, out.out_icv];
+            tc.verifyEqual(sum(vals), 1, 'Es muss genau ein Fall aktiv sein.');
+            tc.verifyTrue(all(ismember(vals, [0 1])), 'Die vier Ausgänge müssen binär sein.');
         end
     end
 end
@@ -185,7 +180,10 @@ function out = localRunCase(tc, n_mech_value, T_soll_value)
 
     out.id_ref = double(localExtractLastValue(simOut, tc.SIGNAL_ID_REF));
     out.iq_ref = double(localExtractLastValue(simOut, tc.SIGNAL_IQ_REF));
-    out.strategie = double(localExtractLastValue(simOut, tc.SIGNAL_STRAT));
+    out.out_iat = double(localExtractLastValue(simOut, tc.SIGNAL_OUT_IAT));
+    out.out_itv = double(localExtractLastValue(simOut, tc.SIGNAL_OUT_ITV));
+    out.out_iac = double(localExtractLastValue(simOut, tc.SIGNAL_OUT_IAC));
+    out.out_icv = double(localExtractLastValue(simOut, tc.SIGNAL_OUT_ICV));
     out.I_max = I_max;
 end
 
