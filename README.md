@@ -14,7 +14,7 @@ Verwendete Kennlinien bzw Erklärung der Abkürzungen:
 - Voltage Ellipse bzw. Spannungsgrenze
 
 ## Fachlicher Hintergrund - Quadratische Gleichungen nach Hackl
-- Drehmomenthyperbel: T(m_ref) := (is)^T * T* is + 2*t^T*is + tau(m_ref) = 0
+- Drehmomenthyperbel: `T(m_ref) := (is)^T * T* is + 2*t^T*is + tau(m_ref) = 0`
 - MTPC-Kennlinie: MTPC := (is)^T * Mc* is + 2*mc^T*is = 0
 - MTPV-Kennlinie: MTPV := (is)^T * Mv(omega)* is + 2*mv(omega)^T*is + µv(omega) = 0
 - MTPF-Kennlinie: MTPF := (is)^T * Mf* is + 2*mf^T*is +µf = 0
