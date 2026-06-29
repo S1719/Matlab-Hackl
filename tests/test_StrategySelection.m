@@ -189,43 +189,33 @@ end
 
 function value = localExtractLastValue(simOut, sigName)
     data = [];
-    value = [];
 
-    try
+    if isprop(simOut, sigName)
+        candidate = simOut.(sigName);
+        data = localGetNumericData(candidate);
+    end
+
+    if isempty(data) && isprop(simOut, 'logsout')
         logs = simOut.logsout;
-        if ~isempty(logs)
-            elem = logs.get(sigName);
-            if ~isempty(elem)
-                data = elem.Values.Data;
+        if isa(logs, 'Simulink.SimulationData.Dataset') && ~isempty(logs)
+            names = getElementNames(logs);
+            idx = find(strcmp(names, sigName), 1);
+            if ~isempty(idx)
+                elem = logs.get(idx);
+                data = localGetNumericData(elem.Values);
             end
-        end
-    catch
-    end
-
-    if isempty(data)
-        try
-            yout = simOut.get('yout');
-            if isa(yout, 'Simulink.SimulationData.Dataset')
-                elem = yout.getElement(sigName);
-                if ~isempty(elem)
-                    data = elem.Values.Data;
-                end
-            end
-        catch
         end
     end
 
-    if isempty(data)
-        try
-            candidate = simOut.get(sigName);
-            if isa(candidate, 'timeseries')
-                data = candidate.Data;
-            elseif isa(candidate, 'Simulink.SimulationData.Signal')
-                data = candidate.Values.Data;
-            elseif isnumeric(candidate)
-                data = candidate;
+    if isempty(data) && isprop(simOut, 'yout')
+        yout = simOut.get('yout');
+        if isa(yout, 'Simulink.SimulationData.Dataset')
+            names = getElementNames(yout);
+            idx = find(strcmp(names, sigName), 1);
+            if ~isempty(idx)
+                elem = yout.get(idx);
+                data = localGetNumericData(elem.Values);
             end
-        catch
         end
     end
 
@@ -233,10 +223,19 @@ function value = localExtractLastValue(simOut, sigName)
         error('Signal %s konnte nicht aus dem SimulationOutput gelesen werden.', sigName);
     end
 
-    if isnumeric(data)
-        value = data(end);
-    else
-        value = data;
+    value = data(end);
+end
+
+function data = localGetNumericData(candidate)
+    data = [];
+    if isa(candidate, 'timeseries')
+        data = candidate.Data;
+    elseif isa(candidate, 'Simulink.SimulationData.Signal')
+        data = candidate.Values.Data;
+    elseif isnumeric(candidate)
+        data = candidate;
+    elseif isstruct(candidate) && isfield(candidate, 'signals')
+        data = candidate.signals.values;
     end
 end
 
