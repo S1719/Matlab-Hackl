@@ -2,24 +2,26 @@ name: MATLAB CI
 
 on:
   push:
-    branches:
-      - main
-      - master
-      - develop
+    branches: [main, master, develop]
   pull_request:
-    branches:
-      - main
-      - master
-      - develop
+    branches: [main, master, develop]
   workflow_dispatch:
 
 jobs:
   test:
-    runs-on: self-hosted
+    runs-on: [self-hosted, windows, x64]
 
     steps:
       - name: Repository auschecken
         uses: actions/checkout@v4
+
+      - name: Runner Diagnose
+        shell: cmd
+        run: |
+          echo Runner-OS: %RUNNER_OS%
+          echo Workspace: %GITHUB_WORKSPACE%
+          where matlab
+          dir "C:\Program Files\MATLAB\R2023b\bin\matlab.exe"
 
       - name: MATLAB / Simulink Diagnose
         shell: cmd
