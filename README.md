@@ -14,10 +14,32 @@ Verwendete Kennlinien bzw Erklärung der Abkürzungen:
 - Voltage Ellipse bzw. Spannungsgrenze
 
 ## Fachlicher Hintergrund - Quadratische Gleichungen nach Hackl
-- Drehmomenthyperbel: `T(m_ref) := (is)^T * T* is + 2*t^T*is + tau(m_ref) = 0`
-- MTPC-Kennlinie: MTPC := (is)^T * Mc* is + 2*mc^T*is = 0
-- MTPV-Kennlinie: MTPV := (is)^T * Mv(omega)* is + 2*mv(omega)^T*is + µv(omega) = 0
-- MTPF-Kennlinie: MTPF := (is)^T * Mf* is + 2*mf^T*is +µf = 0
+Drehmomenthyperbel:
+```math
+T(m_{\mathrm{ref}}) := \mathbf{i}_s^\mathsf{T}\,\mathbf{T}\,\mathbf{i}_s
++ 2\,\mathbf{t}^\mathsf{T}\mathbf{i}_s
++ \tau(m_{\mathrm{ref}}) = 0
+```
+
+MTPC-Kennlinie:
+```math
+\mathrm{MTPC} := \mathbf{i}_s^\mathsf{T}\,\mathbf{M}_c\,\mathbf{i}_s
++ 2\,\mathbf{m}_c^\mathsf{T}\mathbf{i}_s = 0
+```
+
+MTPV-Kennlinie:
+```math
+\mathrm{MTPV} := \mathbf{i}_s^\mathsf{T}\,\mathbf{M}_v(\omega)\,\mathbf{i}_s
++ 2\,\mathbf{m}_v(\omega)^\mathsf{T}\mathbf{i}_s
++ \mu_v(\omega) = 0
+```
+
+MTPF-Kennlinie:
+```math
+\mathrm{MTPF} := \mathbf{i}_s^\mathsf{T}\,\mathbf{M}_f\,\mathbf{i}_s
++ 2\,\mathbf{m}_f^\mathsf{T}\mathbf{i}_s
++ \mu_f = 0
+```
 
   
 ## Fachlicher Hintergrund - Auswahlalgorithmus Betriebspunkt
