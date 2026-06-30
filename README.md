@@ -43,22 +43,13 @@ MTPF-Kennlinie:
 
   
 ## Fachlicher Hintergrund - Auswahlalgorithmus Betriebspunkt
-Der im Modell verwendete Auswahlalgorithmus folgt sinngemäß diesem Ablauf:
+Der im Modell verwendete Auswahlalgorithmus nach Glac, Šmídl und Peroutka folgt sinngemäß diesem Ablauf:
 1. Berechnung der relevanten Kurven und Schnittpunkte.
 2. Bestimmung des Vorzeichens des Referenzmoments.
 3. Berechnung von Kandidatenpunkten an den Schnittstellen von MTPC, MTPV, Stromkreis, Spannungsellipse und Drehmomenthyperbel.
 4. Ermittlung eines zulässigen Zwischenkandidaten \(i_{feas}\).
 5. Vergleich des angeforderten Moments mit den an den Grenzpunkten erreichbaren Momenten.
 6. Auswahl des finalen Arbeitspunkts als einer der zulässigen Kandidaten, z. B. \(i_{feas}\), \(i_{tv}\) oder \(i_{at}\), abhängig von Spannungs-, Strom- und Momentgrenzen. 
-
-
-## Inhalt der Tests
-
-Die Tests decken aktuell drei Bereiche ab:
-
-- **LUT-Konsistenz:** Prüft Größen, `meshgrid`-Orientierung sowie `NaN`/`Inf` in den Kennfeldern.
-- **Modellparameter:** Prüft, ob feste Parameter wie `p`, `Rs`, `I_max`, `U_dc` sowie optional `U_max` und `n_max` vorhanden und gültig sind.
-- **Strategiewahl:** Prüft an festen Referenzpunkten, ob der vom Modell gewählte Betriebspunkt zur erwarteten Strategie bzw. zum erwarteten Betriebsbereich passt.
 
 ## Modellidee
 
@@ -69,11 +60,15 @@ Das Simulink-Modell berechnet für gegebene Vorgaben wie Drehzahl und Drehmoment
 - Stromgrenze und Spannungsellipse (i_cv),
 - sowie Grenzkurven mit der Drehmomenthyperbel (i_tv, i_at). 
 
-Aus diesen Kandidaten wird anschließend gemäß dem Entscheidungsbaum ein zulässiger und geeigneter Sollstromvektor ausgewählt. Der Algorithmus unterscheidet also zwischen:
-- der **analytischen Berechnung** von Kennlinien und Schnittpunkten,
-- und der **logischen Auswahl** des finalen Betriebspunkts. 
+Aus diesen Kandidaten wird anschließend gemäß dem Entscheidungsbaum ein zulässiger und geeigneter Sollstromvektor ausgewählt. 
 
-Diese Trennung ist wichtig, weil eine korrekte Berechnung einzelner Kennlinien allein noch nicht garantiert, dass im Betrieb auch der richtige Kandidat ausgewählt wird. Genau deshalb existieren neben Konsistenz- und Parametertests auch separate Strategietests.
+## Inhalt der Tests
+
+Die Tests decken aktuell drei Bereiche ab:
+
+- **LUT-Konsistenz:** Prüft Größen, `meshgrid`-Orientierung sowie `NaN`/`Inf` in den Kennfeldern.
+- **Modellparameter:** Prüft, ob feste Parameter wie `p`, `Rs`, `I_max`, `U_dc` sowie optional `U_max` und `n_max` vorhanden und gültig sind.
+- **Strategiewahl:** Prüft an festen Referenzpunkten, ob der vom Modell gewählte Betriebspunkt zur erwarteten Strategie bzw. zum erwarteten Betriebsbereich passt.
 
 ## Voraussetzungen
 
@@ -119,47 +114,11 @@ Typische Ursachen sind:
 - Kennfeldgrößen passen nicht mehr zusammen,
 - ein Parameter fehlt oder ist ungültig,
 - eine Modelländerung hat die Strategiewahl verändert,
-- `id_ref`, `iq_ref` oder `strategie` weichen von der Baseline ab,
 - Signale wurden im Modell umbenannt und können nicht mehr aus dem `SimulationOutput` gelesen werden,
 - oder in der CI-Umgebung ist keine Simulink-Lizenz verfügbar.
 
 ## Typische Fehlerbilder
-
-### 1. Baseline-Datei fehlt
-
-Die Regression kann nicht laufen, weil noch keine Referenz erzeugt wurde.
-
-**Lösung:**  
-Baseline lokal mit `create_baseline` erzeugen und committen.
-
-### 2. Signal konnte nicht aus dem `SimulationOutput` gelesen werden
-
-Das Signal ist nicht mehr in `logsout`, `yout` oder direkt im `SimulationOutput` verfügbar.
-
-**Lösung:**  
-Signalnamen, Logging-Einstellungen oder Testkonstanten prüfen.
-
-### 3. Strategieauswahl stimmt nicht
-
-Der vom Modell gewählte Betriebspunkt passt am Referenzpunkt nicht mehr zur erwarteten Strategie oder zum erwarteten Grenzfall.
-
-**Lösung:**  
-Prüfen, ob die Änderung fachlich gewollt ist oder ein Fehler in der Entscheidungslogik vorliegt.
-
-### 4. Regressionsfehler in `id_ref` oder `iq_ref`
-
-Die berechneten Arbeitspunkte oder deren Zeitverläufe weichen von der Referenz ab.
-
-**Lösung:**  
-Modelländerung, Kennfelder, Parameter, Schnittpunktberechnung oder Auswahlalgorithmus prüfen.
-
-## Empfohlener Arbeitsablauf
-
-1. Modell oder Kennfelder ändern.
-2. Tests lokal mit `run('tests/run_all_tests.m')` ausführen.
-3. Änderungen committen und pushen.
-4. GitHub Actions prüfen.
-5. Nur wenn die Änderung fachlich gewollt ist, Baseline bewusst mit `create_baseline` neu erzeugen.
+[......]
 
 ## Quellenhinweis
 
