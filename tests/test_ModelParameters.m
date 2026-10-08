@@ -5,7 +5,7 @@ classdef test_ModelParameters < matlab.unittest.TestCase
 
     properties (Constant)
         % Name des Simulink-Modells 
-        MODEL = 'Hackl_Pilsen_Algo'
+        MODEL = 'Model_Linearisierung_final'
         
         % Initialisierungsskripte
         DATA_SCRIPT_1 = 'Messdaten_Interpoliert.m'
@@ -36,13 +36,13 @@ classdef test_ModelParameters < matlab.unittest.TestCase
 
             % Vorbedingungen prüfen: Modelle und Skripte müssen existieren
             tc.assertEqual(isfile(modelFile), true, ...
-                sprintf('Modell-Datei wurde nicht gefunden: %s', modelFile));
+                sprintf('Simulink-Modell wurde nicht gefunden. %s', modelFile));
 
             tc.assertEqual(isfile(dataScriptFile1), true, ...
-                sprintf('Datenskript wurde nicht gefunden: %s', dataScriptFile1));
+                sprintf('Datenskript Messdaten_Interpoliert.m fehlt %s', dataScriptFile1));
 
             tc.assertEqual(isfile(dataScriptFile2), true, ...
-                sprintf('Datenskript wurde nicht gefunden: %s', dataScriptFile2));
+                sprintf('Datenskript Maschinendaten_Vorgabe.m fehlt %s', dataScriptFile2));
 
             tc.assertEqual(exist('load_system', 'file') == 2, true, ...
                 'Die Funktion "load_system" ist nicht verfügbar. Simulink fehlt vermutlich.');
