@@ -1,12 +1,12 @@
-name: Self-hosted Runner Test
+name: Runner Test
 
 on:
-workflow_dispatch:
+  workflow_dispatch:
 
 jobs:
-runner-test:
-runs-on: self-hosted
-steps:
-- name: Check runner
-run: echo "Self-hosted Runner funktioniert"
+  test-runner:
+    runs-on: [self-hosted, Windows, X64]
+    steps:
+      - name: Test
+        run: echo "Runner funktioniert"
 
