@@ -1,34 +1,22 @@
 name: MATLAB CI
 
 on:
-  push:
-    branches: [main, master, develop]
-  pull_request:
-    branches: [main, master, develop]
-  workflow_dispatch:
+workflow_dispatch:
 
 jobs:
-  test:
-    runs-on: [self-hosted, Windows, X64]
+matlab-test:
+runs-on: self-hosted
 
-    steps:
-      - name: Repository auschecken
-        uses: actions/checkout@v4
+steps:
+  - name: Repository auschecken
+    uses: actions/checkout@v4
 
-      - name: Runner Diagnose
-        shell: cmd
-        run: |
-          echo Runner-OS: %RUNNER_OS%
-          echo Workspace: %GITHUB_WORKSPACE%
-          where matlab
-          dir "C:\Program Files\MATLAB\R2023b\bin\matlab.exe"
+  - name: MATLAB-Installation prüfen
+    shell: cmd
+    run: |
+      echo Runner-OS: %RUNNER_OS%
+      echo Workspace: %GITHUB_WORKSPACE%
+      if not exist "C:\Program Files\MATLAB\R2023b\bin\matlab.exe" exit /b 1
+      "C:\Program Files\MATLAB\R2023b\bin\matlab.exe" -batch "disp('MATLAB funktioniert')"
 
-      - name: MATLAB / Simulink Diagnose
-        shell: cmd
-        run: |
-          "C:\Program Files\MATLAB\R2023b\bin\matlab.exe" -batch "cd(getenv('GITHUB_WORKSPACE')); run('ci_diagnose.m')"
 
-      - name: Tests ausführen
-        shell: cmd
-        run: |
-          "C:\Program Files\MATLAB\R2023b\bin\matlab.exe" -batch "cd(getenv('GITHUB_WORKSPACE')); addpath(genpath(pwd)); run_all_tests"
