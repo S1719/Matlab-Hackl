@@ -1,0 +1,11 @@
+name: Runner Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-runner:
+    runs-on: self-hosted
+    steps:
+      - name: Runner erreichbar
+        run: echo "Der Runner fuehrt Jobs aus."
