@@ -8,7 +8,7 @@ on:
 jobs:
   test:
     name: Run MATLAB Tests
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
       - name: Repository auschecken
