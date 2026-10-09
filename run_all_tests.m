@@ -43,11 +43,13 @@ disp('--- DEBUG: resolved files ---');
 disp(which('run_all_tests', '-all'));
 disp(which('test_LUT_Consistency', '-all'));
 disp(which('test_ModelParameters', '-all'));
-disp(which('test_StrategySelection', '-all'));
+disp(which('test_OperatingPoints', '-all'));
+disp(which('test_ZeroTorque', '-all'));
+
 
 % Debug-Ausgabe, ob alle nötigen Files im Repository liegen
 disp('--- DEBUG: repository files ---');
-disp(fullfile(repoRoot, 'Hackl_Pilsen_Algo.slx'));
+disp(fullfile(repoRoot, 'Model_Linearisierung_final.slx'));
 disp(fullfile(repoRoot, 'Messdaten_Interpoliert.m'));
 disp(fullfile(repoRoot, 'Maschinendaten_Vorgabe.m'));
 disp(fullfile(repoRoot, 'daten_nichtlinear_interpoliert.mat'));
