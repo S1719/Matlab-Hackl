@@ -10,7 +10,7 @@ cd(repoRoot)
 
 fprintf('Aktueller Ordner: %s\n', pwd)
 
-modelFile = fullfile(repoRoot, 'Hackl_Pilsen_Algo.slx');
+modelFile = fullfile(repoRoot, 'Model_Linearisierung_final.slx');
 initFile  = fullfile(repoRoot, 'Messdaten_Interpoliert.m');
 initFile1 = fullfile(repoRoot, 'Maschinendaten_Vorgabe.m');
 lutFile   = fullfile(repoRoot, 'LUT_BRUSA_jax_grad.mat');
