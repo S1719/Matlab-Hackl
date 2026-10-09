@@ -5,7 +5,7 @@ on:
 
 jobs:
   test-runner:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: runner-test
         run: echo "Runner funktioniert"
