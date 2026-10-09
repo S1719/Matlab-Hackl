@@ -8,7 +8,5 @@ runner-test:
 runs-on: self-hosted
 steps:
 - name: Check runner
-run: |
-echo "Self-hosted Runner funktioniert"
-hostname
-whoami
+run: echo "Self-hosted Runner funktioniert"
+
