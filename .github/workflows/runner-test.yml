@@ -1,11 +1,14 @@
-name: Runner Test
+name: Self-hosted Runner Test
 
 on:
-  workflow_dispatch:
+workflow_dispatch:
 
 jobs:
-  test-runner:
-    runs-on: self-hosted
-    steps:
-      - name: Test
-        run: echo "Runner funktioniert"
+runner-test:
+runs-on: self-hosted
+steps:
+- name: Check runner
+run: |
+echo "Self-hosted Runner funktioniert"
+hostname
+whoami
