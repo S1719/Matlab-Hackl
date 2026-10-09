@@ -16,3 +16,5 @@ jobs:
 
       - name: MATLAB-Tests ausführen
         uses: matlab-actions/run-tests@v3
+        with:
+          command: run_all_tests
